@@ -1,0 +1,14 @@
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const ProtectedRoute = ({ children }) => {
+  const { student } = useAuth();
+
+  if (!student) {
+    return <Navigate to="/login" replace state={{ message: "Unauthorized access" }} />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
