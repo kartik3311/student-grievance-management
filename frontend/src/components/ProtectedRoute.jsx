@@ -2,9 +2,9 @@ import { Navigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const ProtectedRoute = ({ children }) => {
-  const { student } = useAuth();
+  const { user } = useAuth();
 
-  if (!student) {
+  if (!user) {
     return <Navigate to="/login" replace state={{ message: "Unauthorized access" }} />;
   }
 

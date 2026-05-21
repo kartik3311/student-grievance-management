@@ -6,7 +6,12 @@ import { useAuth } from "../context/AuthContext.jsx";
 const Register = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [form, setForm] = useState({
+    name: "",
+    email: "",
+    password: "",
+    mobileNumber: ""
+  });
   const [error, setError] = useState("");
 
   const handleChange = (event) => {
@@ -34,7 +39,7 @@ const Register = () => {
     <main className="auth-page">
       <section className="auth-panel">
         <h1>Create Account</h1>
-        <p>Register as a student to submit and track grievances.</p>
+        <p>Register to book travel packages and track each reservation.</p>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -71,6 +76,18 @@ const Register = () => {
               value={form.password}
               onChange={handleChange}
               placeholder="Create a password"
+              required
+            />
+          </label>
+
+          <label>
+            Mobile Number
+            <input
+              type="tel"
+              name="mobileNumber"
+              value={form.mobileNumber}
+              onChange={handleChange}
+              placeholder="Enter your mobile number"
               required
             />
           </label>

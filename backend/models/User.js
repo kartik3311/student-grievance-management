@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const studentSchema = new mongoose.Schema(
+const userSchema = new mongoose.Schema(
   {
     name: {
       type: String,
@@ -17,11 +17,16 @@ const studentSchema = new mongoose.Schema(
     password: {
       type: String,
       required: true
+    },
+    mobileNumber: {
+      type: String,
+      required: true,
+      trim: true
     }
   },
   { timestamps: true }
 );
 
-const Student = mongoose.model("Student", studentSchema);
+const User = mongoose.model("User", userSchema);
 
-export default Student;
+export default User;

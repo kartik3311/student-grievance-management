@@ -1,0 +1,1491 @@
+﻿<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI Driven Full Stack Development MSE2 Submission</title>
+  <style>
+    body {
+      color: #111827;
+      font-family: Arial, Helvetica, sans-serif;
+      line-height: 1.45;
+      margin: 40px;
+    }
+    h1, h2, h3 {
+      color: #0f172a;
+    }
+    h1 {
+      text-align: center;
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+    h2 {
+      border-bottom: 2px solid #d1d5db;
+      font-size: 20px;
+      margin-top: 32px;
+      padding-bottom: 6px;
+      page-break-after: avoid;
+    }
+    h3 {
+      font-size: 16px;
+      margin-top: 22px;
+      page-break-after: avoid;
+    }
+    table {
+      border-collapse: collapse;
+      margin: 18px 0;
+      width: 100%;
+    }
+    td, th {
+      border: 1px solid #9ca3af;
+      padding: 9px;
+      vertical-align: top;
+    }
+    th {
+      background: #e5e7eb;
+      text-align: left;
+    }
+    a {
+      color: #1d4ed8;
+    }
+    pre {
+      background: #f3f4f6;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      font-size: 10px;
+      overflow-wrap: break-word;
+      padding: 12px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .subtitle {
+      text-align: center;
+      margin-bottom: 24px;
+    }
+    .path {
+      color: #4b5563;
+      font-size: 12px;
+      margin-top: -8px;
+    }
+    .placeholder {
+      border: 2px dashed #9ca3af;
+      color: #374151;
+      margin: 12px 0 22px;
+      min-height: 160px;
+      padding: 18px;
+      text-align: center;
+    }
+    .page-break {
+      page-break-before: always;
+    }
+  </style>
+</head>
+<body>
+  <h1>AI Driven Full Stack Development (AI308B)</h1>
+  <div class="subtitle">Moodle MSE2 Submission Format</div>
+
+  <table>
+    <tr><th>Name</th><td>Kartik Upadhyay</td></tr>
+    <tr><th>Branch</th><td>AIML</td></tr>
+    <tr><th>Roll Number</th><td>202501200400005</td></tr>
+    <tr><th>Section</th><td>AI-B</td></tr>
+    <tr><th>Shift</th><td>Evening</td></tr>
+    <tr><th>Case Study Name</th><td>Student Grievance Management System</td></tr>
+  </table>
+
+  <h2>GitHub Repository Link</h2>
+  <p><a href="https://github.com/Kartik3311/student-grievance-management">https://github.com/Kartik3311/student-grievance-management</a></p>
+
+  <h2>Render Deployment Links for all Routes</h2>
+  <table>
+    <tr>
+      <th>Backend Deployment Link</th>
+      <td><a href="https://student-grievance-management-dsst.onrender.com">https://student-grievance-management-dsst.onrender.com</a></td>
+    </tr>
+    <tr>
+      <th>Frontend Deployment Link</th>
+      <td><a href="https://student-grievance-frontend-f7o4.onrender.com">https://student-grievance-frontend-f7o4.onrender.com</a></td>
+    </tr>
+  </table>
+
+  <h2>Project Code</h2>
+  <p>This project uses <strong>server.js</strong> as the backend entry file instead of index.js. The real backend <strong>.env</strong> file contains private database credentials and is not included in the report. The safe <strong>.env.example</strong> file is included.</p>
+
+  <h2>Backend Code</h2>
+  <h3>Backend Main File - server.js</h3>
+<p class="path">backend\server.js</p>
+<pre><code>import cors from &quot;cors&quot;;
+import dotenv from &quot;dotenv&quot;;
+import express from &quot;express&quot;;
+import connectDB from &quot;./config/db.js&quot;;
+import authRoutes from &quot;./routes/authRoutes.js&quot;;
+import grievanceRoutes from &quot;./routes/grievanceRoutes.js&quot;;
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+connectDB();
+
+app.use(cors());
+app.use(express.json());
+
+app.get(&quot;/&quot;, (req, res) =&gt; {
+  res.send(&quot;Student Grievance Management API is running&quot;);
+});
+
+app.use(&quot;/api&quot;, authRoutes);
+app.use(&quot;/api/grievances&quot;, grievanceRoutes);
+
+app.listen(PORT, () =&gt; {
+  console.log(`Server running on port ${PORT}`);
+});
+</code></pre>
+<h3>Database Connection - db.js</h3>
+<p class="path">backend\config\db.js</p>
+<pre><code>import mongoose from &quot;mongoose&quot;;
+
+const connectDB = async () =&gt; {
+  try {
+    const connection = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB connected: ${connection.connection.host}`);
+  } catch (error) {
+    console.error(`MongoDB connection failed: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+export default connectDB;
+</code></pre>
+<h3>Student Model - Student.js</h3>
+<p class="path">backend\models\Student.js</p>
+<pre><code>import mongoose from &quot;mongoose&quot;;
+
+const studentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true
+    },
+    password: {
+      type: String,
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+const Student = mongoose.model(&quot;Student&quot;, studentSchema);
+
+export default Student;
+</code></pre>
+<h3>Grievance Model - Grievance.js</h3>
+<p class="path">backend\models\Grievance.js</p>
+<pre><code>import mongoose from &quot;mongoose&quot;;
+
+const grievanceSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    category: {
+      type: String,
+      enum: [&quot;Academic&quot;, &quot;Hostel&quot;, &quot;Transport&quot;, &quot;Other&quot;],
+      required: true
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    status: {
+      type: String,
+      enum: [&quot;Pending&quot;, &quot;Resolved&quot;],
+      default: &quot;Pending&quot;
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: &quot;Student&quot;,
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+const Grievance = mongoose.model(&quot;Grievance&quot;, grievanceSchema);
+
+export default Grievance;
+</code></pre>
+<h3>Authentication Middleware - authMiddleware.js</h3>
+<p class="path">backend\middleware\authMiddleware.js</p>
+<pre><code>import jwt from &quot;jsonwebtoken&quot;;
+import Student from &quot;../models/Student.js&quot;;
+
+const protect = async (req, res, next) =&gt; {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith(&quot;Bearer &quot;)) {
+    return res.status(401).json({ message: &quot;Unauthorized access&quot; });
+  }
+
+  try {
+    const token = authHeader.split(&quot; &quot;)[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await Student.findById(decoded.id).select(&quot;-password&quot;);
+
+    if (!req.user) {
+      return res.status(401).json({ message: &quot;Unauthorized access&quot; });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: &quot;Unauthorized access&quot; });
+  }
+};
+
+export default protect;
+</code></pre>
+<h3>Authentication Controller - authController.js</h3>
+<p class="path">backend\controllers\authController.js</p>
+<pre><code>import bcrypt from &quot;bcrypt&quot;;
+import jwt from &quot;jsonwebtoken&quot;;
+import Student from &quot;../models/Student.js&quot;;
+
+const createToken = (studentId) =&gt; {
+  return jwt.sign({ id: studentId }, process.env.JWT_SECRET, {
+    expiresIn: &quot;7d&quot;
+  });
+};
+
+export const registerStudent = async (req, res) =&gt; {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: &quot;Please fill all fields&quot; });
+    }
+
+    const existingStudent = await Student.findOne({ email });
+
+    if (existingStudent) {
+      return res.status(409).json({ message: &quot;Duplicate email&quot; });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const student = await Student.create({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    res.status(201).json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      token: createToken(student._id)
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: &quot;Duplicate email&quot; });
+    }
+
+    res.status(500).json({ message: &quot;Registration failed&quot; });
+  }
+};
+
+export const loginStudent = async (req, res) =&gt; {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: &quot;Please enter email and password&quot; });
+    }
+
+    const student = await Student.findOne({ email });
+
+    if (!student) {
+      return res.status(401).json({ message: &quot;Invalid login&quot; });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, student.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: &quot;Invalid login&quot; });
+    }
+
+    res.json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      token: createToken(student._id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: &quot;Login failed&quot; });
+  }
+};
+</code></pre>
+<h3>Grievance Controller - grievanceController.js</h3>
+<p class="path">backend\controllers\grievanceController.js</p>
+<pre><code>import Grievance from &quot;../models/Grievance.js&quot;;
+
+export const createGrievance = async (req, res) =&gt; {
+  try {
+    const { title, description, category } = req.body;
+
+    if (!title || !description || !category) {
+      return res.status(400).json({ message: &quot;Please fill all fields&quot; });
+    }
+
+    const grievance = await Grievance.create({
+      title,
+      description,
+      category,
+      userId: req.user._id
+    });
+
+    res.status(201).json(grievance);
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not create grievance&quot; });
+  }
+};
+
+export const getGrievances = async (req, res) =&gt; {
+  try {
+    const grievances = await Grievance.find({ userId: req.user._id }).sort({
+      createdAt: -1
+    });
+
+    res.json(grievances);
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not fetch grievances&quot; });
+  }
+};
+
+export const getGrievanceById = async (req, res) =&gt; {
+  try {
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: &quot;Grievance not found&quot; });
+    }
+
+    res.json(grievance);
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not fetch grievance&quot; });
+  }
+};
+
+export const updateGrievance = async (req, res) =&gt; {
+  try {
+    const { title, description, category, status } = req.body;
+
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: &quot;Grievance not found&quot; });
+    }
+
+    grievance.title = title || grievance.title;
+    grievance.description = description || grievance.description;
+    grievance.category = category || grievance.category;
+    grievance.status = status || grievance.status;
+
+    const updatedGrievance = await grievance.save();
+
+    res.json(updatedGrievance);
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not update grievance&quot; });
+  }
+};
+
+export const deleteGrievance = async (req, res) =&gt; {
+  try {
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: &quot;Grievance not found&quot; });
+    }
+
+    await grievance.deleteOne();
+
+    res.json({ message: &quot;Grievance deleted&quot; });
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not delete grievance&quot; });
+  }
+};
+
+export const searchGrievances = async (req, res) =&gt; {
+  try {
+    const { title = &quot;&quot; } = req.query;
+
+    const grievances = await Grievance.find({
+      userId: req.user._id,
+      title: { $regex: title, $options: &quot;i&quot; }
+    }).sort({ createdAt: -1 });
+
+    res.json(grievances);
+  } catch (error) {
+    res.status(500).json({ message: &quot;Could not search grievances&quot; });
+  }
+};
+</code></pre>
+<h3>Authentication Routes - authRoutes.js</h3>
+<p class="path">backend\routes\authRoutes.js</p>
+<pre><code>import express from &quot;express&quot;;
+import { loginStudent, registerStudent } from &quot;../controllers/authController.js&quot;;
+
+const router = express.Router();
+
+router.post(&quot;/register&quot;, registerStudent);
+router.post(&quot;/login&quot;, loginStudent);
+
+export default router;
+</code></pre>
+<h3>Grievance Routes - grievanceRoutes.js</h3>
+<p class="path">backend\routes\grievanceRoutes.js</p>
+<pre><code>import express from &quot;express&quot;;
+import {
+  createGrievance,
+  deleteGrievance,
+  getGrievanceById,
+  getGrievances,
+  searchGrievances,
+  updateGrievance
+} from &quot;../controllers/grievanceController.js&quot;;
+import protect from &quot;../middleware/authMiddleware.js&quot;;
+
+const router = express.Router();
+
+router.use(protect);
+
+router.get(&quot;/search&quot;, searchGrievances);
+router.route(&quot;/&quot;).post(createGrievance).get(getGrievances);
+router
+  .route(&quot;/:id&quot;)
+  .get(getGrievanceById)
+  .put(updateGrievance)
+  .delete(deleteGrievance);
+
+export default router;
+</code></pre>
+<h3>Backend Environment Example - .env.example</h3>
+<p class="path">backend\.env.example</p>
+<pre><code>PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/student_grievance_db
+JWT_SECRET=replace_this_with_a_long_secret_key
+</code></pre>
+<h3>Backend package.json</h3>
+<p class="path">backend\package.json</p>
+<pre><code>{
+  &quot;name&quot;: &quot;student-grievance-backend&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;Backend API for a Student Grievance Management System&quot;,
+  &quot;main&quot;: &quot;server.js&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: {
+    &quot;node&quot;: &quot;&gt;=18&quot;
+  },
+  &quot;scripts&quot;: {
+    &quot;start&quot;: &quot;node server.js&quot;,
+    &quot;dev&quot;: &quot;nodemon server.js&quot;
+  },
+  &quot;dependencies&quot;: {
+    &quot;bcrypt&quot;: &quot;^5.1.1&quot;,
+    &quot;cors&quot;: &quot;^2.8.5&quot;,
+    &quot;dotenv&quot;: &quot;^16.4.7&quot;,
+    &quot;express&quot;: &quot;^4.21.2&quot;,
+    &quot;jsonwebtoken&quot;: &quot;^9.0.2&quot;,
+    &quot;mongoose&quot;: &quot;^8.9.5&quot;
+  },
+  &quot;devDependencies&quot;: {
+    &quot;nodemon&quot;: &quot;^3.1.9&quot;
+  }
+}
+</code></pre>
+
+  <h2 class="page-break">Frontend Code</h2>
+  <h3>React Entry File - main.jsx</h3>
+<p class="path">frontend\src\main.jsx</p>
+<pre><code>import React from &quot;react&quot;;
+import ReactDOM from &quot;react-dom/client&quot;;
+import { BrowserRouter } from &quot;react-router-dom&quot;;
+import App from &quot;./App.jsx&quot;;
+import { AuthProvider } from &quot;./context/AuthContext.jsx&quot;;
+import &quot;./index.css&quot;;
+
+ReactDOM.createRoot(document.getElementById(&quot;root&quot;)).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;App /&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+<h3>React Routes - App.jsx</h3>
+<p class="path">frontend\src\App.jsx</p>
+<pre><code>import { Navigate, Route, Routes } from &quot;react-router-dom&quot;;
+import ProtectedRoute from &quot;./components/ProtectedRoute.jsx&quot;;
+import Dashboard from &quot;./pages/Dashboard.jsx&quot;;
+import Login from &quot;./pages/Login.jsx&quot;;
+import Register from &quot;./pages/Register.jsx&quot;;
+
+function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path=&quot;/&quot; element={&lt;Navigate to=&quot;/login&quot; replace /&gt;} /&gt;
+      &lt;Route path=&quot;/register&quot; element={&lt;Register /&gt;} /&gt;
+      &lt;Route path=&quot;/login&quot; element={&lt;Login /&gt;} /&gt;
+      &lt;Route
+        path=&quot;/dashboard&quot;
+        element={
+          &lt;ProtectedRoute&gt;
+            &lt;Dashboard /&gt;
+          &lt;/ProtectedRoute&gt;
+        }
+      /&gt;
+    &lt;/Routes&gt;
+  );
+}
+
+export default App;
+</code></pre>
+<h3>API Helper - api.js</h3>
+<p class="path">frontend\src\api.js</p>
+<pre><code>const API_URL = import.meta.env.VITE_API_URL || &quot;http://localhost:5000/api&quot;;
+
+export const apiRequest = async (path, options = {}) =&gt; {
+  const student = JSON.parse(localStorage.getItem(&quot;student&quot;) || &quot;null&quot;);
+  const headers = {
+    &quot;Content-Type&quot;: &quot;application/json&quot;,
+    ...options.headers
+  };
+
+  if (student?.token) {
+    headers.Authorization = `Bearer ${student.token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || &quot;Something went wrong&quot;);
+  }
+
+  return data;
+};
+</code></pre>
+<h3>Protected Route - ProtectedRoute.jsx</h3>
+<p class="path">frontend\src\components\ProtectedRoute.jsx</p>
+<pre><code>import { Navigate } from &quot;react-router-dom&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const ProtectedRoute = ({ children }) =&gt; {
+  const { student } = useAuth();
+
+  if (!student) {
+    return &lt;Navigate to=&quot;/login&quot; replace state={{ message: &quot;Unauthorized access&quot; }} /&gt;;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+</code></pre>
+<h3>Auth Context - AuthContext.jsx</h3>
+<p class="path">frontend\src\context\AuthContext.jsx</p>
+<pre><code>import { createContext, useContext, useMemo, useState } from &quot;react&quot;;
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) =&gt; {
+  const [student, setStudent] = useState(() =&gt; {
+    return JSON.parse(localStorage.getItem(&quot;student&quot;) || &quot;null&quot;);
+  });
+
+  const login = (studentData) =&gt; {
+    localStorage.setItem(&quot;student&quot;, JSON.stringify(studentData));
+    setStudent(studentData);
+  };
+
+  const logout = () =&gt; {
+    localStorage.removeItem(&quot;student&quot;);
+    setStudent(null);
+  };
+
+  const value = useMemo(() =&gt; ({ student, login, logout }), [student]);
+
+  return &lt;AuthContext.Provider value={value}&gt;{children}&lt;/AuthContext.Provider&gt;;
+};
+
+export const useAuth = () =&gt; {
+  return useContext(AuthContext);
+};
+</code></pre>
+<h3>Register Page - Register.jsx</h3>
+<p class="path">frontend\src\pages\Register.jsx</p>
+<pre><code>import { useState } from &quot;react&quot;;
+import { Link, useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const Register = () =&gt; {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ name: &quot;&quot;, email: &quot;&quot;, password: &quot;&quot; });
+  const [error, setError] = useState(&quot;&quot;);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    setError(&quot;&quot;);
+
+    try {
+      const data = await apiRequest(&quot;/register&quot;, {
+        method: &quot;POST&quot;,
+        body: JSON.stringify(form)
+      });
+
+      login(data);
+      navigate(&quot;/dashboard&quot;);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    &lt;main className=&quot;auth-page&quot;&gt;
+      &lt;section className=&quot;auth-panel&quot;&gt;
+        &lt;h1&gt;Create Account&lt;/h1&gt;
+        &lt;p&gt;Register as a student to submit and track grievances.&lt;/p&gt;
+
+        {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+
+        &lt;form onSubmit={handleSubmit} className=&quot;form&quot;&gt;
+          &lt;label&gt;
+            Name
+            &lt;input
+              type=&quot;text&quot;
+              name=&quot;name&quot;
+              value={form.name}
+              onChange={handleChange}
+              placeholder=&quot;Enter your name&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Email
+            &lt;input
+              type=&quot;email&quot;
+              name=&quot;email&quot;
+              value={form.email}
+              onChange={handleChange}
+              placeholder=&quot;Enter your email&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Password
+            &lt;input
+              type=&quot;password&quot;
+              name=&quot;password&quot;
+              value={form.password}
+              onChange={handleChange}
+              placeholder=&quot;Create a password&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;button type=&quot;submit&quot;&gt;Register&lt;/button&gt;
+        &lt;/form&gt;
+
+        &lt;p className=&quot;switch-link&quot;&gt;
+          Already have an account? &lt;Link to=&quot;/login&quot;&gt;Login&lt;/Link&gt;
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Register;
+</code></pre>
+<h3>Login Page - Login.jsx</h3>
+<p class="path">frontend\src\pages\Login.jsx</p>
+<pre><code>import { useState } from &quot;react&quot;;
+import { Link, useLocation, useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const Login = () =&gt; {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: &quot;&quot;, password: &quot;&quot; });
+  const [error, setError] = useState(location.state?.message || &quot;&quot;);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    setError(&quot;&quot;);
+
+    try {
+      const data = await apiRequest(&quot;/login&quot;, {
+        method: &quot;POST&quot;,
+        body: JSON.stringify(form)
+      });
+
+      login(data);
+      navigate(&quot;/dashboard&quot;);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    &lt;main className=&quot;auth-page&quot;&gt;
+      &lt;section className=&quot;auth-panel&quot;&gt;
+        &lt;h1&gt;Student Login&lt;/h1&gt;
+        &lt;p&gt;Login to manage your grievance records.&lt;/p&gt;
+
+        {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+
+        &lt;form onSubmit={handleSubmit} className=&quot;form&quot;&gt;
+          &lt;label&gt;
+            Email
+            &lt;input
+              type=&quot;email&quot;
+              name=&quot;email&quot;
+              value={form.email}
+              onChange={handleChange}
+              placeholder=&quot;Enter your email&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Password
+            &lt;input
+              type=&quot;password&quot;
+              name=&quot;password&quot;
+              value={form.password}
+              onChange={handleChange}
+              placeholder=&quot;Enter your password&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;button type=&quot;submit&quot;&gt;Login&lt;/button&gt;
+        &lt;/form&gt;
+
+        &lt;p className=&quot;switch-link&quot;&gt;
+          New student? &lt;Link to=&quot;/register&quot;&gt;Create an account&lt;/Link&gt;
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Login;
+</code></pre>
+<h3>Dashboard Page - Dashboard.jsx</h3>
+<p class="path">frontend\src\pages\Dashboard.jsx</p>
+<pre><code>import { useEffect, useState } from &quot;react&quot;;
+import { useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const emptyForm = {
+  title: &quot;&quot;,
+  description: &quot;&quot;,
+  category: &quot;Academic&quot;,
+  status: &quot;Pending&quot;
+};
+
+const Dashboard = () =&gt; {
+  const navigate = useNavigate();
+  const { student, logout } = useAuth();
+  const [form, setForm] = useState(emptyForm);
+  const [grievances, setGrievances] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [searchTitle, setSearchTitle] = useState(&quot;&quot;);
+  const [error, setError] = useState(&quot;&quot;);
+  const [success, setSuccess] = useState(&quot;&quot;);
+
+  const fetchGrievances = async () =&gt; {
+    try {
+      const data = await apiRequest(&quot;/grievances&quot;);
+      setGrievances(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() =&gt; {
+    fetchGrievances();
+  }, []);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const clearMessages = () =&gt; {
+    setError(&quot;&quot;);
+    setSuccess(&quot;&quot;);
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    clearMessages();
+
+    try {
+      if (editingId) {
+        await apiRequest(`/grievances/${editingId}`, {
+          method: &quot;PUT&quot;,
+          body: JSON.stringify(form)
+        });
+        setSuccess(&quot;Grievance updated successfully&quot;);
+      } else {
+        await apiRequest(&quot;/grievances&quot;, {
+          method: &quot;POST&quot;,
+          body: JSON.stringify(form)
+        });
+        setSuccess(&quot;Grievance submitted successfully&quot;);
+      }
+
+      setForm(emptyForm);
+      setEditingId(null);
+      fetchGrievances();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleEdit = (grievance) =&gt; {
+    setEditingId(grievance._id);
+    setForm({
+      title: grievance.title,
+      description: grievance.description,
+      category: grievance.category,
+      status: grievance.status
+    });
+    clearMessages();
+  };
+
+  const handleDelete = async (id) =&gt; {
+    clearMessages();
+
+    try {
+      await apiRequest(`/grievances/${id}`, { method: &quot;DELETE&quot; });
+      setSuccess(&quot;Grievance deleted successfully&quot;);
+      fetchGrievances();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSearch = async (event) =&gt; {
+    event.preventDefault();
+    clearMessages();
+
+    try {
+      const data = await apiRequest(
+        `/grievances/search?title=${encodeURIComponent(searchTitle)}`
+      );
+      setGrievances(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleLogout = () =&gt; {
+    logout();
+    navigate(&quot;/login&quot;);
+  };
+
+  return (
+    &lt;main className=&quot;dashboard-page&quot;&gt;
+      &lt;header className=&quot;dashboard-header&quot;&gt;
+        &lt;div&gt;
+          &lt;p&gt;Welcome, {student?.name}&lt;/p&gt;
+          &lt;h1&gt;Student Grievance Dashboard&lt;/h1&gt;
+        &lt;/div&gt;
+        &lt;button type=&quot;button&quot; className=&quot;secondary-button&quot; onClick={handleLogout}&gt;
+          Logout
+        &lt;/button&gt;
+      &lt;/header&gt;
+
+      {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+      {success &amp;&amp; &lt;div className=&quot;success-message&quot;&gt;{success}&lt;/div&gt;}
+
+      &lt;section className=&quot;dashboard-grid&quot;&gt;
+        &lt;div className=&quot;panel&quot;&gt;
+          &lt;h2&gt;{editingId ? &quot;Update Grievance&quot; : &quot;Submit Grievance&quot;}&lt;/h2&gt;
+
+          &lt;form onSubmit={handleSubmit} className=&quot;form&quot;&gt;
+            &lt;label&gt;
+              Title
+              &lt;input
+                type=&quot;text&quot;
+                name=&quot;title&quot;
+                value={form.title}
+                onChange={handleChange}
+                placeholder=&quot;Short title&quot;
+                required
+              /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Description
+              &lt;textarea
+                name=&quot;description&quot;
+                value={form.description}
+                onChange={handleChange}
+                placeholder=&quot;Describe your issue&quot;
+                rows=&quot;5&quot;
+                required
+              /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Category
+              &lt;select name=&quot;category&quot; value={form.category} onChange={handleChange}&gt;
+                &lt;option value=&quot;Academic&quot;&gt;Academic&lt;/option&gt;
+                &lt;option value=&quot;Hostel&quot;&gt;Hostel&lt;/option&gt;
+                &lt;option value=&quot;Transport&quot;&gt;Transport&lt;/option&gt;
+                &lt;option value=&quot;Other&quot;&gt;Other&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/label&gt;
+
+            {editingId &amp;&amp; (
+              &lt;label&gt;
+                Status
+                &lt;select name=&quot;status&quot; value={form.status} onChange={handleChange}&gt;
+                  &lt;option value=&quot;Pending&quot;&gt;Pending&lt;/option&gt;
+                  &lt;option value=&quot;Resolved&quot;&gt;Resolved&lt;/option&gt;
+                &lt;/select&gt;
+              &lt;/label&gt;
+            )}
+
+            &lt;div className=&quot;button-row&quot;&gt;
+              &lt;button type=&quot;submit&quot;&gt;{editingId ? &quot;Update&quot; : &quot;Submit&quot;}&lt;/button&gt;
+              {editingId &amp;&amp; (
+                &lt;button
+                  type=&quot;button&quot;
+                  className=&quot;secondary-button&quot;
+                  onClick={() =&gt; {
+                    setEditingId(null);
+                    setForm(emptyForm);
+                  }}
+                &gt;
+                  Cancel
+                &lt;/button&gt;
+              )}
+            &lt;/div&gt;
+          &lt;/form&gt;
+        &lt;/div&gt;
+
+        &lt;div className=&quot;panel&quot;&gt;
+          &lt;div className=&quot;list-header&quot;&gt;
+            &lt;h2&gt;My Grievances&lt;/h2&gt;
+            &lt;form onSubmit={handleSearch} className=&quot;search-form&quot;&gt;
+              &lt;input
+                type=&quot;text&quot;
+                value={searchTitle}
+                onChange={(event) =&gt; setSearchTitle(event.target.value)}
+                placeholder=&quot;Search by title&quot;
+              /&gt;
+              &lt;button type=&quot;submit&quot;&gt;Search&lt;/button&gt;
+              &lt;button
+                type=&quot;button&quot;
+                className=&quot;secondary-button&quot;
+                onClick={() =&gt; {
+                  setSearchTitle(&quot;&quot;);
+                  fetchGrievances();
+                }}
+              &gt;
+                Reset
+              &lt;/button&gt;
+            &lt;/form&gt;
+          &lt;/div&gt;
+
+          &lt;div className=&quot;grievance-list&quot;&gt;
+            {grievances.length === 0 ? (
+              &lt;p className=&quot;empty-text&quot;&gt;No grievances found.&lt;/p&gt;
+            ) : (
+              grievances.map((grievance) =&gt; (
+                &lt;article className=&quot;grievance-card&quot; key={grievance._id}&gt;
+                  &lt;div className=&quot;card-top&quot;&gt;
+                    &lt;h3&gt;{grievance.title}&lt;/h3&gt;
+                    &lt;span className={`status ${grievance.status.toLowerCase()}`}&gt;
+                      {grievance.status}
+                    &lt;/span&gt;
+                  &lt;/div&gt;
+                  &lt;p&gt;{grievance.description}&lt;/p&gt;
+                  &lt;div className=&quot;meta-row&quot;&gt;
+                    &lt;span&gt;{grievance.category}&lt;/span&gt;
+                    &lt;span&gt;{new Date(grievance.date).toLocaleDateString()}&lt;/span&gt;
+                  &lt;/div&gt;
+                  &lt;div className=&quot;button-row&quot;&gt;
+                    &lt;button type=&quot;button&quot; onClick={() =&gt; handleEdit(grievance)}&gt;
+                      Edit
+                    &lt;/button&gt;
+                    &lt;button
+                      type=&quot;button&quot;
+                      className=&quot;danger-button&quot;
+                      onClick={() =&gt; handleDelete(grievance._id)}
+                    &gt;
+                      Delete
+                    &lt;/button&gt;
+                  &lt;/div&gt;
+                &lt;/article&gt;
+              ))
+            )}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Dashboard;
+</code></pre>
+<h3>Frontend CSS - index.css</h3>
+<p class="path">frontend\src\index.css</p>
+<pre><code>* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: #1f2937;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 12px 16px;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.auth-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.auth-panel,
+.panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+}
+
+.auth-panel {
+  max-width: 440px;
+  padding: 32px;
+  width: 100%;
+}
+
+.auth-panel h1,
+.dashboard-header h1,
+.panel h2 {
+  margin: 0;
+}
+
+.auth-panel p,
+.dashboard-header p {
+  color: #6b7280;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.form label {
+  color: #374151;
+  display: grid;
+  font-weight: 700;
+  gap: 8px;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #1f2937;
+  outline: none;
+  padding: 12px;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.switch-link {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.dashboard-page {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 28px;
+}
+
+.dashboard-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.panel h2 {
+  margin-bottom: 18px;
+}
+
+.button-row,
+.list-header,
+.meta-row,
+.card-top {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.button-row {
+  flex-wrap: wrap;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.secondary-button:hover {
+  background: #d1d5db;
+}
+
+.danger-button {
+  background: #dc2626;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}
+
+.error-message,
+.success-message {
+  border-radius: 6px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.success-message {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.list-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.search-form input {
+  min-width: 220px;
+}
+
+.grievance-list {
+  display: grid;
+  gap: 14px;
+}
+
+.grievance-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.grievance-card h3,
+.grievance-card p {
+  margin: 0;
+}
+
+.grievance-card p {
+  color: #4b5563;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.card-top {
+  justify-content: space-between;
+}
+
+.status {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.resolved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.meta-row {
+  color: #6b7280;
+  font-size: 14px;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.empty-text {
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (max-width: 850px) {
+  .dashboard-grid,
+  .dashboard-header,
+  .list-header {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header,
+  .list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-form {
+    justify-content: stretch;
+  }
+
+  .search-form input,
+  .search-form button {
+    width: 100%;
+  }
+}
+</code></pre>
+<h3>Frontend package.json</h3>
+<p class="path">frontend\package.json</p>
+<pre><code>{
+  &quot;name&quot;: &quot;student-grievance-frontend&quot;,
+  &quot;version&quot;: &quot;1.0.0&quot;,
+  &quot;description&quot;: &quot;React frontend for a Student Grievance Management System&quot;,
+  &quot;type&quot;: &quot;module&quot;,
+  &quot;engines&quot;: {
+    &quot;node&quot;: &quot;&gt;=18&quot;
+  },
+  &quot;scripts&quot;: {
+    &quot;dev&quot;: &quot;vite&quot;,
+    &quot;build&quot;: &quot;vite build&quot;,
+    &quot;preview&quot;: &quot;vite preview&quot;
+  },
+  &quot;dependencies&quot;: {
+    &quot;react&quot;: &quot;^18.3.1&quot;,
+    &quot;react-dom&quot;: &quot;^18.3.1&quot;,
+    &quot;react-router-dom&quot;: &quot;^6.28.1&quot;
+  },
+  &quot;devDependencies&quot;: {
+    &quot;@vitejs/plugin-react&quot;: &quot;^4.3.4&quot;,
+    &quot;vite&quot;: &quot;^6.0.7&quot;
+  }
+}
+</code></pre>
+
+  <h2 class="page-break">Screenshots of Login, Register, Dashboard and All Functional Modules</h2>
+  <p>Paste your screenshots below in the required order before final PDF submission.</p>
+
+  <h3>1. Register Page</h3>
+  <div class="placeholder">Paste Register Page Screenshot Here</div>
+
+  <h3>2. Login Page</h3>
+  <div class="placeholder">Paste Login Page Screenshot Here</div>
+
+  <h3>3. Dashboard Page</h3>
+  <div class="placeholder">Paste Dashboard Page Screenshot Here</div>
+
+  <h3>4. Submit Grievance Module</h3>
+  <div class="placeholder">Paste Submit Grievance Screenshot Here</div>
+
+  <h3>5. View All Grievances Module</h3>
+  <div class="placeholder">Paste Grievance List Screenshot Here</div>
+
+  <h3>6. Search Grievance Module</h3>
+  <div class="placeholder">Paste Search Grievance Screenshot Here</div>
+
+  <h3>7. Update Grievance Module</h3>
+  <div class="placeholder">Paste Update Grievance Screenshot Here</div>
+
+  <h3>8. Delete Grievance Module</h3>
+  <div class="placeholder">Paste Delete Grievance Screenshot Here</div>
+
+  <h3>9. MongoDB Atlas Students Collection</h3>
+  <div class="placeholder">Paste MongoDB Atlas Students Collection Screenshot Here</div>
+
+  <h3>10. MongoDB Atlas Grievances Collection</h3>
+  <div class="placeholder">Paste MongoDB Atlas Grievances Collection Screenshot Here</div>
+
+  <h3>11. Render Backend Deployment</h3>
+  <div class="placeholder">Paste Render Backend Deployment Screenshot Here</div>
+
+  <h3>12. Render Frontend Deployment</h3>
+  <div class="placeholder">Paste Render Frontend Deployment Screenshot Here</div>
+
+  <h2 class="page-break">Screenshot of VS Code Project Structure</h2>
+  <p>Project structure used for the Student Grievance Management System:</p>
+  <pre><code>C:\Users\KARTIKK\Desktop\Cracks
+|-- backend
+|   |-- config
+|   |   -- db.js
+|   |-- controllers
+|   |   |-- authController.js
+|   |   -- grievanceController.js
+|   |-- middleware
+|   |   -- authMiddleware.js
+|   |-- models
+|   |   |-- Grievance.js
+|   |   -- Student.js
+|   |-- routes
+|   |   |-- authRoutes.js
+|   |   -- grievanceRoutes.js
+|   |-- .env.example
+|   |-- package.json
+|   -- server.js
+|-- frontend
+|   |-- src
+|   |   |-- components
+|   |   |   -- ProtectedRoute.jsx
+|   |   |-- context
+|   |   |   -- AuthContext.jsx
+|   |   |-- pages
+|   |   |   |-- Dashboard.jsx
+|   |   |   |-- Login.jsx
+|   |   |   -- Register.jsx
+|   |   |-- api.js
+|   |   |-- App.jsx
+|   |   |-- index.css
+|   |   -- main.jsx
+|   |-- .env.example
+|   |-- package.json
+|   -- vite.config.js
+|-- README.md
+-- .gitignore</code></pre>
+  <div class="placeholder">Paste VS Code Project Structure Screenshot Here</div>
+</body>
+</html>

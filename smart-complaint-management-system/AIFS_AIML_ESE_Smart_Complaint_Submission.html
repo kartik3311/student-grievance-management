@@ -1,0 +1,1803 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>AI Driven Full Stack Development ESE Submission</title>
+  <style>
+    @page { size: A4; margin: 22mm 18mm; }
+    body {
+      color: #111827;
+      font-family: "Times New Roman", Arial, sans-serif;
+      font-size: 13px;
+      line-height: 1.45;
+      margin: 0;
+    }
+    h1 {
+      background: #ffff00;
+      font-size: 22px;
+      margin: 0 auto 8px;
+      padding: 4px 8px;
+      text-align: center;
+      width: fit-content;
+    }
+    .subtitle {
+      background: #00ffff;
+      font-size: 18px;
+      font-weight: bold;
+      margin: 0 auto 28px;
+      padding: 3px 8px;
+      text-align: center;
+      width: fit-content;
+    }
+    h2 { font-size: 18px; margin: 26px 0 12px; page-break-after: avoid; }
+    h3 { font-size: 15px; margin: 18px 0 4px; page-break-after: avoid; }
+    table {
+      border-collapse: collapse;
+      margin: 12px auto 28px;
+      width: 82%;
+    }
+    th, td {
+      border: 1px solid #000;
+      padding: 8px 10px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #dbe5f1; font-weight: bold; width: 32%; }
+    a { color: #0645ad; word-break: break-all; }
+    pre {
+      background: #f7f7f7;
+      border: 1px solid #c8c8c8;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 8.8px;
+      line-height: 1.25;
+      margin: 6px 0 14px;
+      padding: 8px;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+    .file-path {
+      color: #444;
+      font-family: Consolas, "Courier New", monospace;
+      font-size: 11px;
+      margin-bottom: 4px;
+    }
+    .note {
+      background: #fff7d6;
+      border: 1px solid #e5d58a;
+      margin: 12px 0;
+      padding: 10px;
+    }
+    .placeholder {
+      border: 2px dashed #777;
+      height: 210px;
+      margin: 8px 0 18px;
+      padding-top: 92px;
+      text-align: center;
+    }
+    .screenshot {
+      border: 1px solid #777;
+      display: block;
+      margin: 8px auto 20px;
+      max-height: 500px;
+      max-width: 100%;
+      page-break-inside: avoid;
+    }
+    .page-break { page-break-before: always; }
+  </style>
+</head>
+<body>
+  <h1>AI Driven Full Stack Development (AI308B)</h1>
+  <div class="subtitle">Moodle ESE AIML Submission Format</div>
+
+  <table>
+    <tr><th>Name</th><td>Kartik Upadhyay</td></tr>
+    <tr><th>Branch</th><td>CSE (AI&amp;ML)</td></tr>
+    <tr><th>Roll Number</th><td>2500291539005</td></tr>
+    <tr><th>Section</th><td>B</td></tr>
+    <tr><th>Shift</th><td>Evening</td></tr>
+    <tr><th>Case Study Name</th><td>AI-Based Smart Complaint Management System</td></tr>
+  </table>
+
+  <h2>GitHub Repository Link</h2>
+  <p>Paste GitHub repository link after pushing the project.</p>
+
+  <h2>Render Deployment Links for all Routes</h2>
+  <table>
+    <tr><th>Backend Deployment Link</th><td>Paste backend Render URL after deployment</td></tr>
+    <tr><th>Frontend Deployment Link</th><td>Paste frontend Render URL after deployment</td></tr>
+    <tr><th>POST /api/register</th><td>https://your-backend.onrender.com/api/register</td></tr>
+    <tr><th>POST /api/login</th><td>https://your-backend.onrender.com/api/login</td></tr>
+    <tr><th>POST /api/complaints</th><td>https://your-backend.onrender.com/api/complaints</td></tr>
+    <tr><th>GET /api/complaints</th><td>https://your-backend.onrender.com/api/complaints</td></tr>
+    <tr><th>GET /api/complaints/search?location=Ghaziabad</th><td>https://your-backend.onrender.com/api/complaints/search?location=Ghaziabad</td></tr>
+    <tr><th>PUT /api/complaints/:id</th><td>https://your-backend.onrender.com/api/complaints/:id</td></tr>
+    <tr><th>DELETE /api/complaints/:id</th><td>https://your-backend.onrender.com/api/complaints/:id</td></tr>
+    <tr><th>POST /api/ai/analyze</th><td>https://your-backend.onrender.com/api/ai/analyze</td></tr>
+  </table>
+
+  <h2>Project Code</h2>
+  <p>Backend main file is server.js. Real .env file is not included because it contains MongoDB Atlas password and API keys. The safe .env.example file is shown.</p>
+
+  <h2>Backend Code</h2>
+  <p>Backend Code (server.js, .git, .env, model.js etc.) which is used in the project development.</p>
+  
+  <h3>server.js</h3>
+  <div class="file-path">backend\server.js</div>
+  <pre><code>const cors = require(&quot;cors&quot;);
+const dotenv = require(&quot;dotenv&quot;);
+const express = require(&quot;express&quot;);
+const connectDB = require(&quot;./config/db&quot;);
+const { errorHandler, notFound } = require(&quot;./middleware/errorMiddleware&quot;);
+const aiRoutes = require(&quot;./routes/aiRoutes&quot;);
+const authRoutes = require(&quot;./routes/authRoutes&quot;);
+const complaintRoutes = require(&quot;./routes/complaintRoutes&quot;);
+
+dotenv.config();
+
+connectDB();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+app.use(cors());
+app.use(express.json());
+
+app.get(&quot;/&quot;, (req, res) =&gt; {
+  res.json({ message: &quot;AI-Based Smart Complaint Management API is running&quot; });
+});
+
+app.use(&quot;/api&quot;, authRoutes);
+app.use(&quot;/api/complaints&quot;, complaintRoutes);
+app.use(&quot;/api/ai&quot;, aiRoutes);
+
+app.use(notFound);
+app.use(errorHandler);
+
+app.listen(PORT, () =&gt; {
+  console.log(`Server running on port ${PORT}`);
+});
+</code></pre>
+
+  
+  <h3>config/db.js</h3>
+  <div class="file-path">backend\config\db.js</div>
+  <pre><code>const mongoose = require(&quot;mongoose&quot;);
+
+const connectDB = async () =&gt; {
+  try {
+    const connection = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB connected: ${connection.connection.host}`);
+  } catch (error) {
+    console.error(`MongoDB connection failed: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+module.exports = connectDB;
+</code></pre>
+
+  
+  <h3>.env.example</h3>
+  <div class="file-path">backend\.env.example</div>
+  <pre><code>PORT=5000
+MONGO_URI=mongodb+srv://&lt;username&gt;:&lt;password&gt;@cluster.mongodb.net/smart_complaints
+JWT_SECRET=smart_complaint_jwt_secret_2026
+OPENROUTER_API_KEY=your_openrouter_api_key_here
+OPENROUTER_MODEL=openai/gpt-4o-mini
+</code></pre>
+
+  
+  <h3>models/User.js</h3>
+  <div class="file-path">backend\models\User.js</div>
+  <pre><code>const bcrypt = require(&quot;bcrypt&quot;);
+const mongoose = require(&quot;mongoose&quot;);
+
+const userSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, &quot;Name is required&quot;],
+      trim: true
+    },
+    email: {
+      type: String,
+      required: [true, &quot;Email is required&quot;],
+      unique: true,
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, &quot;Please enter a valid email&quot;]
+    },
+    password: {
+      type: String,
+      required: [true, &quot;Password is required&quot;],
+      minlength: [6, &quot;Password must be at least 6 characters&quot;]
+    },
+    role: {
+      type: String,
+      enum: [&quot;User&quot;, &quot;Admin&quot;],
+      default: &quot;Admin&quot;
+    }
+  },
+  { timestamps: true }
+);
+
+userSchema.pre(&quot;save&quot;, async function hashPassword(next) {
+  if (!this.isModified(&quot;password&quot;)) {
+    return next();
+  }
+
+  const salt = await bcrypt.genSalt(10);
+  this.password = await bcrypt.hash(this.password, salt);
+  next();
+});
+
+userSchema.methods.comparePassword = function comparePassword(candidatePassword) {
+  return bcrypt.compare(candidatePassword, this.password);
+};
+
+module.exports = mongoose.model(&quot;User&quot;, userSchema);
+</code></pre>
+
+  
+  <h3>models/Complaint.js</h3>
+  <div class="file-path">backend\models\Complaint.js</div>
+  <pre><code>const mongoose = require(&quot;mongoose&quot;);
+
+const complaintSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: [true, &quot;Name is required&quot;],
+      trim: true
+    },
+    email: {
+      type: String,
+      required: [true, &quot;Email is required&quot;],
+      lowercase: true,
+      trim: true,
+      match: [/^\S+@\S+\.\S+$/, &quot;Please enter a valid email&quot;]
+    },
+    title: {
+      type: String,
+      required: [true, &quot;Complaint title is required&quot;],
+      trim: true
+    },
+    description: {
+      type: String,
+      required: [true, &quot;Complaint description is required&quot;],
+      trim: true
+    },
+    category: {
+      type: String,
+      required: [true, &quot;Complaint category is required&quot;],
+      trim: true
+    },
+    location: {
+      type: String,
+      required: [true, &quot;Location is required&quot;],
+      trim: true
+    },
+    status: {
+      type: String,
+      enum: [&quot;Pending&quot;, &quot;In Progress&quot;, &quot;Resolved&quot;, &quot;Rejected&quot;],
+      default: &quot;Pending&quot;
+    },
+    aiAnalysis: {
+      urgency: { type: String, default: &quot;Medium&quot; },
+      department: { type: String, default: &quot;General Administration&quot; },
+      summary: { type: String, default: &quot;&quot; },
+      response: { type: String, default: &quot;&quot; }
+    },
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: &quot;User&quot;
+    }
+  },
+  { timestamps: true }
+);
+
+module.exports = mongoose.model(&quot;Complaint&quot;, complaintSchema);
+</code></pre>
+
+  
+  <h3>middleware/authMiddleware.js</h3>
+  <div class="file-path">backend\middleware\authMiddleware.js</div>
+  <pre><code>const jwt = require(&quot;jsonwebtoken&quot;);
+const User = require(&quot;../models/User&quot;);
+
+const protect = async (req, res, next) =&gt; {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith(&quot;Bearer &quot;)) {
+    return res.status(401).json({ message: &quot;Access denied. No token provided.&quot; });
+  }
+
+  try {
+    const token = authHeader.split(&quot; &quot;)[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = await User.findById(decoded.id).select(&quot;-password&quot;);
+
+    if (!req.user) {
+      return res.status(401).json({ message: &quot;Access denied. User not found.&quot; });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: &quot;Invalid or expired token.&quot; });
+  }
+};
+
+module.exports = protect;
+</code></pre>
+
+  
+  <h3>middleware/errorMiddleware.js</h3>
+  <div class="file-path">backend\middleware\errorMiddleware.js</div>
+  <pre><code>const notFound = (req, res, next) =&gt; {
+  const error = new Error(`Route not found - ${req.originalUrl}`);
+  res.status(404);
+  next(error);
+};
+
+const errorHandler = (error, req, res, next) =&gt; {
+  const statusCode = res.statusCode === 200 ? 500 : res.statusCode;
+
+  if (error.name === &quot;ValidationError&quot;) {
+    return res.status(400).json({
+      message: Object.values(error.errors)
+        .map((item) =&gt; item.message)
+        .join(&quot;, &quot;)
+    });
+  }
+
+  if (error.code === 11000) {
+    return res.status(409).json({ message: &quot;Duplicate record found.&quot; });
+  }
+
+  res.status(statusCode).json({
+    message: error.message || &quot;Server error&quot;
+  });
+};
+
+module.exports = { errorHandler, notFound };
+</code></pre>
+
+  
+  <h3>controllers/authController.js</h3>
+  <div class="file-path">backend\controllers\authController.js</div>
+  <pre><code>const jwt = require(&quot;jsonwebtoken&quot;);
+const User = require(&quot;../models/User&quot;);
+
+const createToken = (userId) =&gt; {
+  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
+    expiresIn: &quot;7d&quot;
+  });
+};
+
+const registerUser = async (req, res, next) =&gt; {
+  try {
+    const { name, email, password, role } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: &quot;Please fill all required fields.&quot; });
+    }
+
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(409).json({ message: &quot;User already exists.&quot; });
+    }
+
+    const user = await User.create({ name, email, password, role });
+
+    res.status(201).json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: createToken(user._id)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const loginUser = async (req, res, next) =&gt; {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: &quot;Please enter email and password.&quot; });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user || !(await user.comparePassword(password))) {
+      return res.status(401).json({ message: &quot;Invalid email or password.&quot; });
+    }
+
+    res.json({
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+      token: createToken(user._id)
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { loginUser, registerUser };
+</code></pre>
+
+  
+  <h3>controllers/complaintController.js</h3>
+  <div class="file-path">backend\controllers\complaintController.js</div>
+  <pre><code>const Complaint = require(&quot;../models/Complaint&quot;);
+const { analyzeComplaintText } = require(&quot;./aiController&quot;);
+
+const createComplaint = async (req, res, next) =&gt; {
+  try {
+    const complaint = await Complaint.create({
+      ...req.body,
+      createdBy: req.user?._id
+    });
+
+    res.status(201).json({
+      message: &quot;Complaint stored successfully.&quot;,
+      complaint
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const getComplaints = async (req, res, next) =&gt; {
+  try {
+    const { category, status } = req.query;
+    const query = {};
+
+    if (category) {
+      query.category = new RegExp(category, &quot;i&quot;);
+    }
+
+    if (status) {
+      query.status = status;
+    }
+
+    const complaints = await Complaint.find(query).sort({ createdAt: -1 });
+    res.json(complaints);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const searchComplaints = async (req, res, next) =&gt; {
+  try {
+    const { location, category } = req.query;
+    const query = {};
+
+    if (location) {
+      query.location = new RegExp(location, &quot;i&quot;);
+    }
+
+    if (category) {
+      query.category = new RegExp(category, &quot;i&quot;);
+    }
+
+    const complaints = await Complaint.find(query).sort({ createdAt: -1 });
+    res.json(complaints);
+  } catch (error) {
+    next(error);
+  }
+};
+
+const updateComplaintStatus = async (req, res, next) =&gt; {
+  try {
+    const complaint = await Complaint.findByIdAndUpdate(
+      req.params.id,
+      { status: req.body.status },
+      { new: true, runValidators: true }
+    );
+
+    if (!complaint) {
+      return res.status(404).json({ message: &quot;Complaint not found.&quot; });
+    }
+
+    res.json({
+      message: &quot;Complaint status updated successfully.&quot;,
+      complaint
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const deleteComplaint = async (req, res, next) =&gt; {
+  try {
+    const complaint = await Complaint.findByIdAndDelete(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: &quot;Complaint not found.&quot; });
+    }
+
+    res.json({ message: &quot;Complaint removed successfully.&quot; });
+  } catch (error) {
+    next(error);
+  }
+};
+
+const analyzeComplaint = async (req, res, next) =&gt; {
+  try {
+    const complaint = await Complaint.findById(req.params.id);
+
+    if (!complaint) {
+      return res.status(404).json({ message: &quot;Complaint not found.&quot; });
+    }
+
+    const aiAnalysis = await analyzeComplaintText(complaint);
+    complaint.aiAnalysis = aiAnalysis;
+    await complaint.save();
+
+    res.json({
+      message: &quot;AI complaint analysis completed.&quot;,
+      complaint
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  analyzeComplaint,
+  createComplaint,
+  deleteComplaint,
+  getComplaints,
+  searchComplaints,
+  updateComplaintStatus
+};
+</code></pre>
+
+  
+  <h3>controllers/aiController.js</h3>
+  <div class="file-path">backend\controllers\aiController.js</div>
+  <pre><code>const keywordFallback = (complaint) =&gt; {
+  const text = `${complaint.title} ${complaint.description} ${complaint.category}`.toLowerCase();
+  let urgency = &quot;Medium&quot;;
+  let department = &quot;General Administration&quot;;
+
+  if (text.includes(&quot;electric&quot;) || text.includes(&quot;fire&quot;) || text.includes(&quot;danger&quot;)) {
+    urgency = &quot;High&quot;;
+    department = &quot;Electricity Department&quot;;
+  } else if (text.includes(&quot;water&quot;) || text.includes(&quot;leak&quot;) || text.includes(&quot;pipeline&quot;)) {
+    urgency = &quot;High&quot;;
+    department = &quot;Water Supply Department&quot;;
+  } else if (text.includes(&quot;garbage&quot;) || text.includes(&quot;waste&quot;) || text.includes(&quot;clean&quot;)) {
+    urgency = &quot;Medium&quot;;
+    department = &quot;Sanitation Department&quot;;
+  } else if (text.includes(&quot;road&quot;) || text.includes(&quot;traffic&quot;) || text.includes(&quot;street&quot;)) {
+    department = &quot;Public Works Department&quot;;
+  }
+
+  return {
+    urgency,
+    department,
+    summary: `${complaint.title}: ${complaint.description.slice(0, 120)}${
+      complaint.description.length &gt; 120 ? &quot;...&quot; : &quot;&quot;
+    }`,
+    response: `Your complaint has been registered and forwarded to the ${department}. Current priority is ${urgency}.`
+  };
+};
+
+const parseAiJson = (content, complaint) =&gt; {
+  try {
+    const jsonStart = content.indexOf(&quot;{&quot;);
+    const jsonEnd = content.lastIndexOf(&quot;}&quot;);
+    const jsonText = content.slice(jsonStart, jsonEnd + 1);
+    const parsed = JSON.parse(jsonText);
+
+    return {
+      urgency: parsed.urgency || &quot;Medium&quot;,
+      department: parsed.department || &quot;General Administration&quot;,
+      summary: parsed.summary || complaint.description,
+      response: parsed.response || &quot;Your complaint has been received.&quot;
+    };
+  } catch (error) {
+    return keywordFallback(complaint);
+  }
+};
+
+const analyzeComplaintText = async (complaint) =&gt; {
+  if (!process.env.OPENROUTER_API_KEY) {
+    return keywordFallback(complaint);
+  }
+
+  try {
+    const response = await fetch(&quot;https://openrouter.ai/api/v1/chat/completions&quot;, {
+      method: &quot;POST&quot;,
+      headers: {
+        Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+        &quot;Content-Type&quot;: &quot;application/json&quot;,
+        &quot;HTTP-Referer&quot;: &quot;http://localhost:5173&quot;,
+        &quot;X-Title&quot;: &quot;Smart Complaint Management System&quot;
+      },
+      body: JSON.stringify({
+        model: process.env.OPENROUTER_MODEL || &quot;openai/gpt-4o-mini&quot;,
+        messages: [
+          {
+            role: &quot;system&quot;,
+            content:
+              &quot;Analyze civic complaints. Return only JSON with urgency, department, summary, and response.&quot;
+          },
+          {
+            role: &quot;user&quot;,
+            content: JSON.stringify({
+              title: complaint.title,
+              description: complaint.description,
+              category: complaint.category,
+              location: complaint.location
+            })
+          }
+        ],
+        temperature: 0.2
+      })
+    });
+
+    if (!response.ok) {
+      return keywordFallback(complaint);
+    }
+
+    const data = await response.json();
+    const content = data.choices?.[0]?.message?.content || &quot;&quot;;
+    return parseAiJson(content, complaint);
+  } catch (error) {
+    return keywordFallback(complaint);
+  }
+};
+
+const analyzeComplaintFromBody = async (req, res, next) =&gt; {
+  try {
+    const analysis = await analyzeComplaintText(req.body);
+    res.json({ message: &quot;AI analysis completed.&quot;, analysis });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = { analyzeComplaintFromBody, analyzeComplaintText };
+</code></pre>
+
+  
+  <h3>routes/authRoutes.js</h3>
+  <div class="file-path">backend\routes\authRoutes.js</div>
+  <pre><code>const express = require(&quot;express&quot;);
+const { loginUser, registerUser } = require(&quot;../controllers/authController&quot;);
+
+const router = express.Router();
+
+router.post(&quot;/signup&quot;, registerUser);
+router.post(&quot;/register&quot;, registerUser);
+router.post(&quot;/login&quot;, loginUser);
+
+module.exports = router;
+</code></pre>
+
+  
+  <h3>routes/complaintRoutes.js</h3>
+  <div class="file-path">backend\routes\complaintRoutes.js</div>
+  <pre><code>const express = require(&quot;express&quot;);
+const {
+  analyzeComplaint,
+  createComplaint,
+  deleteComplaint,
+  getComplaints,
+  searchComplaints,
+  updateComplaintStatus
+} = require(&quot;../controllers/complaintController&quot;);
+const protect = require(&quot;../middleware/authMiddleware&quot;);
+
+const router = express.Router();
+
+router.use(protect);
+
+router.post(&quot;/&quot;, createComplaint);
+router.get(&quot;/&quot;, getComplaints);
+router.get(&quot;/search&quot;, searchComplaints);
+router.put(&quot;/:id&quot;, updateComplaintStatus);
+router.delete(&quot;/:id&quot;, deleteComplaint);
+router.post(&quot;/:id/analyze&quot;, analyzeComplaint);
+
+module.exports = router;
+</code></pre>
+
+  
+  <h3>routes/aiRoutes.js</h3>
+  <div class="file-path">backend\routes\aiRoutes.js</div>
+  <pre><code>const express = require(&quot;express&quot;);
+const { analyzeComplaintFromBody } = require(&quot;../controllers/aiController&quot;);
+const protect = require(&quot;../middleware/authMiddleware&quot;);
+
+const router = express.Router();
+
+router.post(&quot;/analyze&quot;, protect, analyzeComplaintFromBody);
+
+module.exports = router;
+</code></pre>
+
+
+  <h2 class="page-break">Frontend Code</h2>
+  <p>Frontend Code (App.jsx, main.jsx, Dashboard.jsx, Login.jsx, Register.jsx etc.) which are used in the project development.</p>
+  
+  <h3>App.jsx</h3>
+  <div class="file-path">frontend\src\App.jsx</div>
+  <pre><code>import { Navigate, Route, Routes } from &quot;react-router-dom&quot;;
+import ProtectedRoute from &quot;./components/ProtectedRoute.jsx&quot;;
+import Dashboard from &quot;./pages/Dashboard.jsx&quot;;
+import Login from &quot;./pages/Login.jsx&quot;;
+import Register from &quot;./pages/Register.jsx&quot;;
+
+function App() {
+  return (
+    &lt;Routes&gt;
+      &lt;Route path=&quot;/&quot; element={&lt;Navigate to=&quot;/login&quot; replace /&gt;} /&gt;
+      &lt;Route path=&quot;/register&quot; element={&lt;Register /&gt;} /&gt;
+      &lt;Route path=&quot;/login&quot; element={&lt;Login /&gt;} /&gt;
+      &lt;Route
+        path=&quot;/dashboard&quot;
+        element={
+          &lt;ProtectedRoute&gt;
+            &lt;Dashboard /&gt;
+          &lt;/ProtectedRoute&gt;
+        }
+      /&gt;
+    &lt;/Routes&gt;
+  );
+}
+
+export default App;
+</code></pre>
+
+  
+  <h3>main.jsx</h3>
+  <div class="file-path">frontend\src\main.jsx</div>
+  <pre><code>import React from &quot;react&quot;;
+import ReactDOM from &quot;react-dom/client&quot;;
+import { BrowserRouter } from &quot;react-router-dom&quot;;
+import App from &quot;./App.jsx&quot;;
+import { AuthProvider } from &quot;./context/AuthContext.jsx&quot;;
+import &quot;./index.css&quot;;
+
+ReactDOM.createRoot(document.getElementById(&quot;root&quot;)).render(
+  &lt;React.StrictMode&gt;
+    &lt;BrowserRouter&gt;
+      &lt;AuthProvider&gt;
+        &lt;App /&gt;
+      &lt;/AuthProvider&gt;
+    &lt;/BrowserRouter&gt;
+  &lt;/React.StrictMode&gt;
+);
+</code></pre>
+
+  
+  <h3>api.js</h3>
+  <div class="file-path">frontend\src\api.js</div>
+  <pre><code>const API_URL = import.meta.env.VITE_API_URL || &quot;http://localhost:5000/api&quot;;
+
+export const apiRequest = async (path, options = {}) =&gt; {
+  const auth = JSON.parse(localStorage.getItem(&quot;smartComplaintAuth&quot;) || &quot;null&quot;);
+  const headers = {
+    &quot;Content-Type&quot;: &quot;application/json&quot;,
+    ...options.headers
+  };
+
+  if (auth?.token) {
+    headers.Authorization = `Bearer ${auth.token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || &quot;Something went wrong&quot;);
+  }
+
+  return data;
+};
+</code></pre>
+
+  
+  <h3>context/AuthContext.jsx</h3>
+  <div class="file-path">frontend\src\context\AuthContext.jsx</div>
+  <pre><code>import { createContext, useContext, useMemo, useState } from &quot;react&quot;;
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) =&gt; {
+  const [auth, setAuth] = useState(() =&gt; {
+    return JSON.parse(localStorage.getItem(&quot;smartComplaintAuth&quot;) || &quot;null&quot;);
+  });
+
+  const login = (userData) =&gt; {
+    localStorage.setItem(&quot;smartComplaintAuth&quot;, JSON.stringify(userData));
+    setAuth(userData);
+  };
+
+  const logout = () =&gt; {
+    localStorage.removeItem(&quot;smartComplaintAuth&quot;);
+    setAuth(null);
+  };
+
+  const value = useMemo(
+    () =&gt; ({
+      auth,
+      isAuthenticated: Boolean(auth?.token),
+      login,
+      logout
+    }),
+    [auth]
+  );
+
+  return &lt;AuthContext.Provider value={value}&gt;{children}&lt;/AuthContext.Provider&gt;;
+};
+
+export const useAuth = () =&gt; useContext(AuthContext);
+</code></pre>
+
+  
+  <h3>components/ProtectedRoute.jsx</h3>
+  <div class="file-path">frontend\src\components\ProtectedRoute.jsx</div>
+  <pre><code>import { Navigate } from &quot;react-router-dom&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const ProtectedRoute = ({ children }) =&gt; {
+  const { isAuthenticated } = useAuth();
+
+  if (!isAuthenticated) {
+    return &lt;Navigate to=&quot;/login&quot; replace /&gt;;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+</code></pre>
+
+  
+  <h3>Register.jsx</h3>
+  <div class="file-path">frontend\src\pages\Register.jsx</div>
+  <pre><code>import { useState } from &quot;react&quot;;
+import { Link, useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const Register = () =&gt; {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({
+    name: &quot;&quot;,
+    email: &quot;&quot;,
+    password: &quot;&quot;,
+    role: &quot;Admin&quot;
+  });
+  const [error, setError] = useState(&quot;&quot;);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    setError(&quot;&quot;);
+    setLoading(true);
+
+    try {
+      const data = await apiRequest(&quot;/register&quot;, {
+        method: &quot;POST&quot;,
+        body: JSON.stringify(form)
+      });
+      login(data);
+      navigate(&quot;/dashboard&quot;);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    &lt;main className=&quot;auth-page&quot;&gt;
+      &lt;section className=&quot;auth-panel&quot;&gt;
+        &lt;p className=&quot;eyebrow&quot;&gt;Smart Complaint Management&lt;/p&gt;
+        &lt;h1&gt;Create Account&lt;/h1&gt;
+        &lt;p&gt;Register an HR/Admin user to manage complaints and AI analysis.&lt;/p&gt;
+
+        {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+
+        &lt;form className=&quot;form&quot; onSubmit={handleSubmit}&gt;
+          &lt;label&gt;
+            Name
+            &lt;input
+              name=&quot;name&quot;
+              value={form.name}
+              onChange={handleChange}
+              placeholder=&quot;Enter full name&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Email
+            &lt;input
+              name=&quot;email&quot;
+              type=&quot;email&quot;
+              value={form.email}
+              onChange={handleChange}
+              placeholder=&quot;Enter email&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Password
+            &lt;input
+              name=&quot;password&quot;
+              type=&quot;password&quot;
+              value={form.password}
+              onChange={handleChange}
+              placeholder=&quot;Minimum 6 characters&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Role
+            &lt;select name=&quot;role&quot; value={form.role} onChange={handleChange}&gt;
+              &lt;option value=&quot;Admin&quot;&gt;Admin&lt;/option&gt;
+              &lt;option value=&quot;User&quot;&gt;User&lt;/option&gt;
+            &lt;/select&gt;
+          &lt;/label&gt;
+
+          &lt;button type=&quot;submit&quot; disabled={loading}&gt;
+            {loading ? &quot;Creating...&quot; : &quot;Create Account&quot;}
+          &lt;/button&gt;
+        &lt;/form&gt;
+
+        &lt;p className=&quot;switch-link&quot;&gt;
+          Already registered? &lt;Link to=&quot;/login&quot;&gt;Login&lt;/Link&gt;
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Register;
+</code></pre>
+
+  
+  <h3>Login.jsx</h3>
+  <div class="file-path">frontend\src\pages\Login.jsx</div>
+  <pre><code>import { useState } from &quot;react&quot;;
+import { Link, useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const Login = () =&gt; {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: &quot;&quot;, password: &quot;&quot; });
+  const [error, setError] = useState(&quot;&quot;);
+  const [loading, setLoading] = useState(false);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    setError(&quot;&quot;);
+    setLoading(true);
+
+    try {
+      const data = await apiRequest(&quot;/login&quot;, {
+        method: &quot;POST&quot;,
+        body: JSON.stringify(form)
+      });
+      login(data);
+      navigate(&quot;/dashboard&quot;);
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    &lt;main className=&quot;auth-page&quot;&gt;
+      &lt;section className=&quot;auth-panel&quot;&gt;
+        &lt;p className=&quot;eyebrow&quot;&gt;AI-Based Complaint System&lt;/p&gt;
+        &lt;h1&gt;Login&lt;/h1&gt;
+        &lt;p&gt;Access protected complaint tracking and AI recommendation modules.&lt;/p&gt;
+
+        {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+
+        &lt;form className=&quot;form&quot; onSubmit={handleSubmit}&gt;
+          &lt;label&gt;
+            Email
+            &lt;input
+              name=&quot;email&quot;
+              type=&quot;text&quot;
+              value={form.email}
+              onChange={handleChange}
+              placeholder=&quot;Enter email&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;label&gt;
+            Password
+            &lt;input
+              name=&quot;password&quot;
+              type=&quot;password&quot;
+              value={form.password}
+              onChange={handleChange}
+              placeholder=&quot;Enter password&quot;
+              required
+            /&gt;
+          &lt;/label&gt;
+
+          &lt;button type=&quot;submit&quot; disabled={loading}&gt;
+            {loading ? &quot;Checking...&quot; : &quot;Login&quot;}
+          &lt;/button&gt;
+        &lt;/form&gt;
+
+        &lt;p className=&quot;switch-link&quot;&gt;
+          New user? &lt;Link to=&quot;/register&quot;&gt;Create account&lt;/Link&gt;
+        &lt;/p&gt;
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Login;
+</code></pre>
+
+  
+  <h3>Dashboard.jsx</h3>
+  <div class="file-path">frontend\src\pages\Dashboard.jsx</div>
+  <pre><code>import { useEffect, useMemo, useState } from &quot;react&quot;;
+import { useNavigate } from &quot;react-router-dom&quot;;
+import { apiRequest } from &quot;../api.js&quot;;
+import { useAuth } from &quot;../context/AuthContext.jsx&quot;;
+
+const emptyForm = {
+  name: &quot;&quot;,
+  email: &quot;&quot;,
+  title: &quot;&quot;,
+  description: &quot;&quot;,
+  category: &quot;Water Supply&quot;,
+  location: &quot;&quot;,
+  status: &quot;Pending&quot;
+};
+
+const statusOptions = [&quot;Pending&quot;, &quot;In Progress&quot;, &quot;Resolved&quot;, &quot;Rejected&quot;];
+
+const Dashboard = () =&gt; {
+  const navigate = useNavigate();
+  const { auth, logout } = useAuth();
+  const [form, setForm] = useState(emptyForm);
+  const [complaints, setComplaints] = useState([]);
+  const [filters, setFilters] = useState({ category: &quot;&quot;, location: &quot;&quot; });
+  const [selectedAnalysis, setSelectedAnalysis] = useState(null);
+  const [message, setMessage] = useState(&quot;&quot;);
+  const [error, setError] = useState(&quot;&quot;);
+  const [loading, setLoading] = useState(false);
+
+  const stats = useMemo(() =&gt; {
+    return {
+      total: complaints.length,
+      pending: complaints.filter((item) =&gt; item.status === &quot;Pending&quot;).length,
+      resolved: complaints.filter((item) =&gt; item.status === &quot;Resolved&quot;).length
+    };
+  }, [complaints]);
+
+  const fetchComplaints = async () =&gt; {
+    try {
+      const query = new URLSearchParams();
+      if (filters.location) query.set(&quot;location&quot;, filters.location);
+      if (filters.category) query.set(&quot;category&quot;, filters.category);
+
+      const endpoint = query.toString()
+        ? `/complaints/search?${query.toString()}`
+        : &quot;/complaints&quot;;
+      const data = await apiRequest(endpoint);
+      setComplaints(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() =&gt; {
+    fetchComplaints();
+  }, []);
+
+  const handleChange = (event) =&gt; {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) =&gt; {
+    event.preventDefault();
+    setError(&quot;&quot;);
+    setMessage(&quot;&quot;);
+    setLoading(true);
+
+    try {
+      await apiRequest(&quot;/complaints&quot;, {
+        method: &quot;POST&quot;,
+        body: JSON.stringify(form)
+      });
+      setMessage(&quot;Complaint stored successfully.&quot;);
+      setForm(emptyForm);
+      await fetchComplaints();
+    } catch (err) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (id, status) =&gt; {
+    setError(&quot;&quot;);
+    setMessage(&quot;&quot;);
+
+    try {
+      await apiRequest(`/complaints/${id}`, {
+        method: &quot;PUT&quot;,
+        body: JSON.stringify({ status })
+      });
+      setMessage(&quot;Complaint status updated successfully.&quot;);
+      await fetchComplaints();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleDelete = async (id) =&gt; {
+    setError(&quot;&quot;);
+    setMessage(&quot;&quot;);
+
+    try {
+      await apiRequest(`/complaints/${id}`, { method: &quot;DELETE&quot; });
+      setMessage(&quot;Complaint removed successfully.&quot;);
+      await fetchComplaints();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleAnalyze = async (complaint) =&gt; {
+    setError(&quot;&quot;);
+    setMessage(&quot;&quot;);
+
+    try {
+      const data = await apiRequest(`/complaints/${complaint._id}/analyze`, {
+        method: &quot;POST&quot;
+      });
+      setSelectedAnalysis(data.complaint);
+      await fetchComplaints();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleLogout = () =&gt; {
+    logout();
+    navigate(&quot;/login&quot;);
+  };
+
+  return (
+    &lt;main className=&quot;dashboard-page&quot;&gt;
+      &lt;header className=&quot;dashboard-header&quot;&gt;
+        &lt;div&gt;
+          &lt;p className=&quot;eyebrow&quot;&gt;Welcome, {auth?.name}&lt;/p&gt;
+          &lt;h1&gt;Smart Complaint Dashboard&lt;/h1&gt;
+        &lt;/div&gt;
+        &lt;button type=&quot;button&quot; className=&quot;secondary-button&quot; onClick={handleLogout}&gt;
+          Logout
+        &lt;/button&gt;
+      &lt;/header&gt;
+
+      &lt;section className=&quot;stats-row&quot;&gt;
+        &lt;div&gt;
+          &lt;span&gt;Total Complaints&lt;/span&gt;
+          &lt;strong&gt;{stats.total}&lt;/strong&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;span&gt;Pending&lt;/span&gt;
+          &lt;strong&gt;{stats.pending}&lt;/strong&gt;
+        &lt;/div&gt;
+        &lt;div&gt;
+          &lt;span&gt;Resolved&lt;/span&gt;
+          &lt;strong&gt;{stats.resolved}&lt;/strong&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      {message &amp;&amp; &lt;div className=&quot;success-message&quot;&gt;{message}&lt;/div&gt;}
+      {error &amp;&amp; &lt;div className=&quot;error-message&quot;&gt;{error}&lt;/div&gt;}
+
+      &lt;section className=&quot;dashboard-grid&quot;&gt;
+        &lt;div className=&quot;panel&quot;&gt;
+          &lt;h2&gt;Complaint Registration Form&lt;/h2&gt;
+          &lt;form className=&quot;form&quot; onSubmit={handleSubmit}&gt;
+            &lt;label&gt;
+              Name
+              &lt;input name=&quot;name&quot; value={form.name} onChange={handleChange} required /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Email
+              &lt;input
+                name=&quot;email&quot;
+                type=&quot;email&quot;
+                value={form.email}
+                onChange={handleChange}
+                required
+              /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Complaint Title
+              &lt;input name=&quot;title&quot; value={form.title} onChange={handleChange} required /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Complaint Category
+              &lt;select name=&quot;category&quot; value={form.category} onChange={handleChange}&gt;
+                &lt;option&gt;Water Supply&lt;/option&gt;
+                &lt;option&gt;Electricity&lt;/option&gt;
+                &lt;option&gt;Sanitation&lt;/option&gt;
+                &lt;option&gt;Roads&lt;/option&gt;
+                &lt;option&gt;Other&lt;/option&gt;
+              &lt;/select&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Location
+              &lt;input name=&quot;location&quot; value={form.location} onChange={handleChange} required /&gt;
+            &lt;/label&gt;
+
+            &lt;label&gt;
+              Complaint Description
+              &lt;textarea
+                name=&quot;description&quot;
+                value={form.description}
+                onChange={handleChange}
+                rows=&quot;5&quot;
+                required
+              /&gt;
+            &lt;/label&gt;
+
+            &lt;button type=&quot;submit&quot; disabled={loading}&gt;
+              {loading ? &quot;Submitting...&quot; : &quot;Submit Complaint&quot;}
+            &lt;/button&gt;
+          &lt;/form&gt;
+        &lt;/div&gt;
+
+        &lt;div className=&quot;panel&quot;&gt;
+          &lt;h2&gt;Search &amp; Filter Section&lt;/h2&gt;
+          &lt;div className=&quot;filter-row&quot;&gt;
+            &lt;input
+              placeholder=&quot;Search by location&quot;
+              value={filters.location}
+              onChange={(event) =&gt; setFilters({ ...filters, location: event.target.value })}
+            /&gt;
+            &lt;select
+              value={filters.category}
+              onChange={(event) =&gt; setFilters({ ...filters, category: event.target.value })}
+            &gt;
+              &lt;option value=&quot;&quot;&gt;All Categories&lt;/option&gt;
+              &lt;option&gt;Water Supply&lt;/option&gt;
+              &lt;option&gt;Electricity&lt;/option&gt;
+              &lt;option&gt;Sanitation&lt;/option&gt;
+              &lt;option&gt;Roads&lt;/option&gt;
+              &lt;option&gt;Other&lt;/option&gt;
+            &lt;/select&gt;
+            &lt;button type=&quot;button&quot; onClick={fetchComplaints}&gt;
+              Apply
+            &lt;/button&gt;
+          &lt;/div&gt;
+
+          &lt;h2&gt;Complaint List Page&lt;/h2&gt;
+          &lt;div className=&quot;complaint-list&quot;&gt;
+            {complaints.length === 0 ? (
+              &lt;p className=&quot;empty-text&quot;&gt;No complaints found.&lt;/p&gt;
+            ) : (
+              complaints.map((complaint) =&gt; (
+                &lt;article className=&quot;complaint-card&quot; key={complaint._id}&gt;
+                  &lt;div className=&quot;card-top&quot;&gt;
+                    &lt;div&gt;
+                      &lt;h3&gt;{complaint.title}&lt;/h3&gt;
+                      &lt;p&gt;{complaint.name} · {complaint.location}&lt;/p&gt;
+                    &lt;/div&gt;
+                    &lt;span className={`status ${complaint.status.toLowerCase().replace(&quot; &quot;, &quot;-&quot;)}`}&gt;
+                      {complaint.status}
+                    &lt;/span&gt;
+                  &lt;/div&gt;
+                  &lt;p&gt;{complaint.description}&lt;/p&gt;
+                  &lt;div className=&quot;meta-row&quot;&gt;
+                    &lt;span&gt;{complaint.category}&lt;/span&gt;
+                    &lt;span&gt;{complaint.email}&lt;/span&gt;
+                  &lt;/div&gt;
+
+                  {complaint.aiAnalysis?.response &amp;&amp; (
+                    &lt;div className=&quot;analysis-mini&quot;&gt;
+                      &lt;strong&gt;AI:&lt;/strong&gt; {complaint.aiAnalysis.department} ·{&quot; &quot;}
+                      {complaint.aiAnalysis.urgency}
+                    &lt;/div&gt;
+                  )}
+
+                  &lt;div className=&quot;button-row&quot;&gt;
+                    &lt;select
+                      value={complaint.status}
+                      onChange={(event) =&gt;
+                        handleStatusUpdate(complaint._id, event.target.value)
+                      }
+                    &gt;
+                      {statusOptions.map((status) =&gt; (
+                        &lt;option key={status}&gt;{status}&lt;/option&gt;
+                      ))}
+                    &lt;/select&gt;
+                    &lt;button type=&quot;button&quot; onClick={() =&gt; handleAnalyze(complaint)}&gt;
+                      AI Analyze
+                    &lt;/button&gt;
+                    &lt;button
+                      type=&quot;button&quot;
+                      className=&quot;danger-button&quot;
+                      onClick={() =&gt; handleDelete(complaint._id)}
+                    &gt;
+                      Delete
+                    &lt;/button&gt;
+                  &lt;/div&gt;
+                &lt;/article&gt;
+              ))
+            )}
+          &lt;/div&gt;
+        &lt;/div&gt;
+      &lt;/section&gt;
+
+      &lt;section className=&quot;panel ai-panel&quot;&gt;
+        &lt;h2&gt;AI Analysis Result Display&lt;/h2&gt;
+        {selectedAnalysis ? (
+          &lt;div className=&quot;analysis-grid&quot;&gt;
+            &lt;div&gt;
+              &lt;span&gt;Urgency&lt;/span&gt;
+              &lt;strong&gt;{selectedAnalysis.aiAnalysis.urgency}&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;span&gt;Responsible Department&lt;/span&gt;
+              &lt;strong&gt;{selectedAnalysis.aiAnalysis.department}&lt;/strong&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;span&gt;Complaint Summary&lt;/span&gt;
+              &lt;p&gt;{selectedAnalysis.aiAnalysis.summary}&lt;/p&gt;
+            &lt;/div&gt;
+            &lt;div&gt;
+              &lt;span&gt;Auto Response&lt;/span&gt;
+              &lt;p&gt;{selectedAnalysis.aiAnalysis.response}&lt;/p&gt;
+            &lt;/div&gt;
+          &lt;/div&gt;
+        ) : (
+          &lt;p className=&quot;empty-text&quot;&gt;Click AI Analyze on a complaint to generate results.&lt;/p&gt;
+        )}
+      &lt;/section&gt;
+    &lt;/main&gt;
+  );
+};
+
+export default Dashboard;
+</code></pre>
+
+  
+  <h3>index.css</h3>
+  <div class="file-path">frontend\src\index.css</div>
+  <pre><code>* {
+  box-sizing: border-box;
+}
+
+body {
+  background: #eef2f5;
+  color: #17212b;
+  font-family: Arial, Helvetica, sans-serif;
+  margin: 0;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  background: #176b87;
+  border: 0;
+  border-radius: 6px;
+  color: #fff;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 11px 14px;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.secondary-button {
+  background: #52616f;
+}
+
+.danger-button {
+  background: #b42318;
+}
+
+.auth-page {
+  align-items: center;
+  display: flex;
+  min-height: 100vh;
+  justify-content: center;
+  padding: 24px;
+}
+
+.auth-panel,
+.panel {
+  background: #fff;
+  border: 1px solid #d7e0e7;
+  border-radius: 8px;
+  box-shadow: 0 10px 28px rgba(23, 33, 43, 0.08);
+}
+
+.auth-panel {
+  max-width: 430px;
+  padding: 32px;
+  width: 100%;
+}
+
+.eyebrow {
+  color: #176b87;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0;
+  margin: 0 0 6px;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  font-size: 30px;
+  margin-bottom: 8px;
+}
+
+h2 {
+  font-size: 20px;
+  margin-bottom: 18px;
+}
+
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+label {
+  color: #3c4650;
+  display: grid;
+  font-size: 14px;
+  font-weight: 700;
+  gap: 7px;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #c7d3dc;
+  border-radius: 6px;
+  color: #17212b;
+  padding: 11px 12px;
+  width: 100%;
+}
+
+textarea {
+  resize: vertical;
+}
+
+.switch-link {
+  margin: 18px 0 0;
+}
+
+.switch-link a {
+  color: #176b87;
+  font-weight: 700;
+}
+
+.dashboard-page {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 28px;
+}
+
+.dashboard-header {
+  align-items: center;
+  display: flex;
+  gap: 20px;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+
+.stats-row {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 18px;
+}
+
+.stats-row div {
+  background: #fff;
+  border: 1px solid #d7e0e7;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.stats-row span,
+.analysis-grid span {
+  color: #52616f;
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.stats-row strong {
+  font-size: 30px;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: 0.92fr 1.08fr;
+}
+
+.panel {
+  padding: 22px;
+}
+
+.filter-row {
+  display: grid;
+  gap: 10px;
+  grid-template-columns: 1fr 170px 90px;
+  margin-bottom: 24px;
+}
+
+.complaint-list {
+  display: grid;
+  gap: 14px;
+}
+
+.complaint-card {
+  border: 1px solid #d7e0e7;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.card-top,
+.button-row,
+.meta-row {
+  align-items: center;
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.card-top p,
+.meta-row {
+  color: #607080;
+  font-size: 13px;
+}
+
+.status {
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 800;
+  padding: 6px 10px;
+  white-space: nowrap;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.in-progress {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status.resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.status.rejected {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.analysis-mini {
+  background: #f0f9ff;
+  border-left: 4px solid #176b87;
+  margin: 12px 0;
+  padding: 10px;
+}
+
+.ai-panel {
+  margin-top: 18px;
+}
+
+.analysis-grid {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.analysis-grid div {
+  background: #f7fafc;
+  border: 1px solid #d7e0e7;
+  border-radius: 8px;
+  padding: 14px;
+}
+
+.success-message,
+.error-message {
+  border-radius: 6px;
+  font-weight: 700;
+  margin-bottom: 14px;
+  padding: 12px 14px;
+}
+
+.success-message {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.empty-text {
+  color: #607080;
+}
+
+@media (max-width: 850px) {
+  .dashboard-grid,
+  .stats-row,
+  .analysis-grid,
+  .filter-row {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header,
+  .card-top,
+  .button-row,
+  .meta-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
+</code></pre>
+
+
+  <h2 class="page-break">Postman / Thunder Client HTTP Request Screenshots</h2>
+  
+  <table>
+    <tr><th>Endpoint</th><td>Purpose</td></tr>
+    <tr><th>POST /api/register</th><td>Signup with bcrypt password hashing</td></tr>
+    <tr><th>POST /api/login</th><td>Login and generate JWT token</td></tr>
+    <tr><th>POST /api/complaints</th><td>Add complaint</td></tr>
+    <tr><th>GET /api/complaints</th><td>View all complaints</td></tr>
+    <tr><th>GET /api/complaints/search?location=Ghaziabad</th><td>Search/filter complaints by location/category</td></tr>
+    <tr><th>PUT /api/complaints/:id</th><td>Update complaint status</td></tr>
+    <tr><th>DELETE /api/complaints/:id</th><td>Delete complaint</td></tr>
+    <tr><th>POST /api/ai/analyze</th><td>Analyze complaint text with AI API</td></tr>
+    <tr><th>POST /api/complaints/:id/analyze</th><td>Analyze saved complaint and store AI result</td></tr>
+  </table>
+
+  <div class="placeholder">Paste Postman/Thunder Client Register Request Screenshot Here</div>
+  <div class="placeholder">Paste Postman/Thunder Client Login Request Screenshot Here</div>
+  <div class="placeholder">Paste Postman/Thunder Client Complaint Request Screenshot Here</div>
+  <div class="placeholder">Paste Postman/Thunder Client AI Analyze Request Screenshot Here</div>
+
+  <h2 class="page-break">Screenshots of Login, Register, Dashboard and All Functional Modules</h2>
+  <h3>Register Page</h3>
+  <img class="screenshot" src="file:///C:/Users/KARTIKK/Desktop/Cracks/smart-complaint-management-system/submission-assets/register.png" alt="Register Page Screenshot">
+  <h3>Login Page</h3>
+  <img class="screenshot" src="file:///C:/Users/KARTIKK/Desktop/Cracks/smart-complaint-management-system/submission-assets/login.png" alt="Login Page Screenshot">
+  <h3>Dashboard / Complaint List Page</h3>
+  <img class="screenshot" src="file:///C:/Users/KARTIKK/Desktop/Cracks/smart-complaint-management-system/submission-assets/dashboard.png" alt="Dashboard Screenshot">
+  <h3>Complaint Registration Form</h3>
+  <img class="screenshot" src="file:///C:/Users/KARTIKK/Desktop/Cracks/smart-complaint-management-system/submission-assets/dashboard.png" alt="Complaint Registration Form Screenshot">
+  <h3>AI Analysis Result Display</h3>
+  <img class="screenshot" src="file:///C:/Users/KARTIKK/Desktop/Cracks/smart-complaint-management-system/submission-assets/ai-analysis.png" alt="AI Analysis Result Screenshot">
+  <h3>Complaint Status Update Page</h3>
+  <div class="placeholder">Paste Status Update Screenshot Here</div>
+  <h3>MongoDB Atlas Users Collection</h3>
+  <div class="placeholder">Paste MongoDB Atlas Users Collection Screenshot Here</div>
+  <h3>MongoDB Atlas Complaints Collection</h3>
+  <div class="placeholder">Paste MongoDB Atlas Complaints Collection Screenshot Here</div>
+  <h3>Render Backend Deployment Screenshot</h3>
+  <div class="placeholder">Paste Render Backend Deployment Screenshot Here</div>
+  <h3>Render Frontend Deployment Screenshot</h3>
+  <div class="placeholder">Paste Render Frontend Deployment Screenshot Here</div>
+
+  <h2 class="page-break">Screenshot of VS Code Project Structure</h2>
+  <pre><code>C:\Users\KARTIKK\Desktop\Cracks\smart-complaint-management-system
+|-- backend
+|   |-- config
+|   |   -- db.js
+|   |-- controllers
+|   |   |-- aiController.js
+|   |   |-- authController.js
+|   |   -- complaintController.js
+|   |-- middleware
+|   |   |-- authMiddleware.js
+|   |   -- errorMiddleware.js
+|   |-- models
+|   |   |-- Complaint.js
+|   |   -- User.js
+|   |-- routes
+|   |   |-- aiRoutes.js
+|   |   |-- authRoutes.js
+|   |   -- complaintRoutes.js
+|   |-- .env.example
+|   |-- package.json
+|   -- server.js
+|-- frontend
+|   |-- src
+|   |   |-- components
+|   |   |   -- ProtectedRoute.jsx
+|   |   |-- context
+|   |   |   -- AuthContext.jsx
+|   |   |-- pages
+|   |   |   |-- Dashboard.jsx
+|   |   |   |-- Login.jsx
+|   |   |   -- Register.jsx
+|   |   |-- api.js
+|   |   |-- App.jsx
+|   |   |-- index.css
+|   |   -- main.jsx
+|   |-- .env.example
+|   |-- package.json
+|   -- vite.config.js
+|-- README.md
+-- .gitignore</code></pre>
+  <div class="placeholder">Paste VS Code Project Structure Screenshot Here</div>
+
+  <h2 class="page-break">Manual Process Required</h2>
+  <div class="note">
+    <p><b>1. Paste secrets in backend/.env:</b> MONGO_URI, JWT_SECRET, and OPENROUTER_API_KEY. Do not commit .env.</p>
+    <p><b>2. Push to GitHub:</b> initialize git, commit, add remote, and push main branch.</p>
+    <p><b>3. Deploy backend on Render:</b> Root Directory backend, Build Command npm install, Start Command npm start.</p>
+    <p><b>4. Deploy frontend on Render:</b> Root Directory frontend, Build Command npm install &amp;&amp; npm run build, Publish Directory dist.</p>
+    <p><b>5. Add frontend env on Render:</b> VITE_API_URL=https://your-backend.onrender.com/api.</p>
+    <p><b>6. Add screenshots:</b> MongoDB Atlas collections, Postman/Thunder requests, Render success pages, and VS Code project structure.</p>
+  </div>
+</body>
+</html>

@@ -1,81 +1,104 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiRequest } from "../api.js";
 import { useAuth } from "../context/AuthContext.jsx";
 
 const emptyForm = {
-  title: "",
-  description: "",
-  category: "Academic",
-  status: "Pending"
+  destinationName: "",
+  travelDate: "",
+  numberOfTravelers: "1",
+  packageType: "Silver",
+  price: "",
+  bookingStatus: "Pending",
+  contactAddress: ""
 };
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  const { student, logout } = useAuth();
+  const { user, logout } = useAuth();
   const [form, setForm] = useState(emptyForm);
-  const [grievances, setGrievances] = useState([]);
+  const [bookings, setBookings] = useState([]);
   const [editingId, setEditingId] = useState(null);
-  const [searchTitle, setSearchTitle] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  const fetchGrievances = async () => {
+  const fetchBookings = async () => {
     try {
-      const data = await apiRequest("/grievances");
-      setGrievances(data);
+      const data = await apiRequest("/bookings");
+      setBookings(data);
     } catch (err) {
       setError(err.message);
     }
   };
 
   useEffect(() => {
-    fetchGrievances();
+    fetchBookings();
   }, []);
 
-  const handleChange = (event) => {
-    setForm({ ...form, [event.target.name]: event.target.value });
-  };
+  const summary = useMemo(() => {
+    return bookings.reduce(
+      (totals, booking) => {
+        totals.count += 1;
+        totals.travelers += Number(booking.numberOfTravelers || 0);
+        totals.value += Number(booking.price || 0);
+        return totals;
+      },
+      { count: 0, travelers: 0, value: 0 }
+    );
+  }, [bookings]);
 
   const clearMessages = () => {
     setError("");
     setSuccess("");
   };
 
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     clearMessages();
 
+    const payload = {
+      ...form,
+      numberOfTravelers: Number(form.numberOfTravelers),
+      price: Number(form.price)
+    };
+
     try {
       if (editingId) {
-        await apiRequest(`/grievances/${editingId}`, {
+        await apiRequest(`/bookings/${editingId}`, {
           method: "PUT",
-          body: JSON.stringify(form)
+          body: JSON.stringify(payload)
         });
-        setSuccess("Grievance updated successfully");
+        setSuccess("Booking updated successfully");
       } else {
-        await apiRequest("/grievances", {
+        await apiRequest("/bookings", {
           method: "POST",
-          body: JSON.stringify(form)
+          body: JSON.stringify(payload)
         });
-        setSuccess("Grievance submitted successfully");
+        setSuccess("Booking added successfully");
       }
 
       setForm(emptyForm);
       setEditingId(null);
-      fetchGrievances();
+      fetchBookings();
     } catch (err) {
       setError(err.message);
     }
   };
 
-  const handleEdit = (grievance) => {
-    setEditingId(grievance._id);
+  const handleEdit = (booking) => {
+    setEditingId(booking._id);
     setForm({
-      title: grievance.title,
-      description: grievance.description,
-      category: grievance.category,
-      status: grievance.status
+      destinationName: booking.destinationName,
+      travelDate: booking.travelDate?.slice(0, 10) || "",
+      numberOfTravelers: String(booking.numberOfTravelers),
+      packageType: booking.packageType,
+      price: String(booking.price),
+      bookingStatus: booking.bookingStatus,
+      contactAddress: booking.contactAddress
     });
     clearMessages();
   };
@@ -84,23 +107,9 @@ const Dashboard = () => {
     clearMessages();
 
     try {
-      await apiRequest(`/grievances/${id}`, { method: "DELETE" });
-      setSuccess("Grievance deleted successfully");
-      fetchGrievances();
-    } catch (err) {
-      setError(err.message);
-    }
-  };
-
-  const handleSearch = async (event) => {
-    event.preventDefault();
-    clearMessages();
-
-    try {
-      const data = await apiRequest(
-        `/grievances/search?title=${encodeURIComponent(searchTitle)}`
-      );
-      setGrievances(data);
+      await apiRequest(`/bookings/${id}`, { method: "DELETE" });
+      setSuccess("Booking deleted successfully");
+      fetchBookings();
     } catch (err) {
       setError(err.message);
     }
@@ -111,81 +120,135 @@ const Dashboard = () => {
     navigate("/login");
   };
 
+  const handleCancelEdit = () => {
+    setEditingId(null);
+    setForm(emptyForm);
+    clearMessages();
+  };
+
   return (
     <main className="dashboard-page">
       <header className="dashboard-header">
         <div>
-          <p>Welcome, {student?.name}</p>
-          <h1>Student Grievance Dashboard</h1>
+          <p>Welcome, {user?.name}</p>
+          <h1>Travel Package Booking Dashboard</h1>
         </div>
         <button type="button" className="secondary-button" onClick={handleLogout}>
           Logout
         </button>
       </header>
 
+      <section className="summary-strip" aria-label="Booking summary">
+        <div>
+          <span>Total Bookings</span>
+          <strong>{summary.count}</strong>
+        </div>
+        <div>
+          <span>Travelers</span>
+          <strong>{summary.travelers}</strong>
+        </div>
+        <div>
+          <span>Total Value</span>
+          <strong>Rs. {summary.value.toLocaleString("en-IN")}</strong>
+        </div>
+      </section>
+
       {error && <div className="error-message">{error}</div>}
       {success && <div className="success-message">{success}</div>}
 
       <section className="dashboard-grid">
         <div className="panel">
-          <h2>{editingId ? "Update Grievance" : "Submit Grievance"}</h2>
+          <h2>{editingId ? "Update Booking" : "Add Booking"}</h2>
 
           <form onSubmit={handleSubmit} className="form">
             <label>
-              Title
+              Destination Name
               <input
                 type="text"
-                name="title"
-                value={form.title}
+                name="destinationName"
+                value={form.destinationName}
                 onChange={handleChange}
-                placeholder="Short title"
+                placeholder="Goa"
                 required
               />
             </label>
 
             <label>
-              Description
-              <textarea
-                name="description"
-                value={form.description}
+              Travel Date
+              <input
+                type="date"
+                name="travelDate"
+                value={form.travelDate}
                 onChange={handleChange}
-                placeholder="Describe your issue"
-                rows="5"
                 required
               />
             </label>
 
             <label>
-              Category
-              <select name="category" value={form.category} onChange={handleChange}>
-                <option value="Academic">Academic</option>
-                <option value="Hostel">Hostel</option>
-                <option value="Transport">Transport</option>
-                <option value="Other">Other</option>
+              Number of Travelers
+              <input
+                type="number"
+                min="1"
+                name="numberOfTravelers"
+                value={form.numberOfTravelers}
+                onChange={handleChange}
+                required
+              />
+            </label>
+
+            <label>
+              Package Type
+              <select name="packageType" value={form.packageType} onChange={handleChange}>
+                <option value="Silver">Silver</option>
+                <option value="Gold">Gold</option>
+                <option value="Platinum">Platinum</option>
               </select>
+            </label>
+
+            <label>
+              Price
+              <input
+                type="number"
+                min="0"
+                name="price"
+                value={form.price}
+                onChange={handleChange}
+                placeholder="25000"
+                required
+              />
             </label>
 
             {editingId && (
               <label>
-                Status
-                <select name="status" value={form.status} onChange={handleChange}>
+                Booking Status
+                <select
+                  name="bookingStatus"
+                  value={form.bookingStatus}
+                  onChange={handleChange}
+                >
                   <option value="Pending">Pending</option>
-                  <option value="Resolved">Resolved</option>
+                  <option value="Confirmed">Confirmed</option>
+                  <option value="Cancelled">Cancelled</option>
                 </select>
               </label>
             )}
 
+            <label>
+              Contact Address
+              <textarea
+                name="contactAddress"
+                value={form.contactAddress}
+                onChange={handleChange}
+                placeholder="Full pickup or communication address"
+                rows="4"
+                required
+              />
+            </label>
+
             <div className="button-row">
-              <button type="submit">{editingId ? "Update" : "Submit"}</button>
+              <button type="submit">{editingId ? "Update" : "Book Package"}</button>
               {editingId && (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  onClick={() => {
-                    setEditingId(null);
-                    setForm(emptyForm);
-                  }}
-                >
+                <button type="button" className="secondary-button" onClick={handleCancelEdit}>
                   Cancel
                 </button>
               )}
@@ -195,53 +258,45 @@ const Dashboard = () => {
 
         <div className="panel">
           <div className="list-header">
-            <h2>My Grievances</h2>
-            <form onSubmit={handleSearch} className="search-form">
-              <input
-                type="text"
-                value={searchTitle}
-                onChange={(event) => setSearchTitle(event.target.value)}
-                placeholder="Search by title"
-              />
-              <button type="submit">Search</button>
-              <button
-                type="button"
-                className="secondary-button"
-                onClick={() => {
-                  setSearchTitle("");
-                  fetchGrievances();
-                }}
-              >
-                Reset
-              </button>
-            </form>
+            <h2>My Bookings</h2>
+            <span className="record-count">{bookings.length} record(s)</span>
           </div>
 
-          <div className="grievance-list">
-            {grievances.length === 0 ? (
-              <p className="empty-text">No grievances found.</p>
+          <div className="booking-list">
+            {bookings.length === 0 ? (
+              <p className="empty-text">No bookings created yet.</p>
             ) : (
-              grievances.map((grievance) => (
-                <article className="grievance-card" key={grievance._id}>
+              bookings.map((booking) => (
+                <article className="booking-card" key={booking._id}>
                   <div className="card-top">
-                    <h3>{grievance.title}</h3>
-                    <span className={`status ${grievance.status.toLowerCase()}`}>
-                      {grievance.status}
+                    <div>
+                      <h3>{booking.destinationName}</h3>
+                      <p>{booking.packageType} package</p>
+                    </div>
+                    <span className={`status ${booking.bookingStatus.toLowerCase()}`}>
+                      {booking.bookingStatus}
                     </span>
                   </div>
-                  <p>{grievance.description}</p>
-                  <div className="meta-row">
-                    <span>{grievance.category}</span>
-                    <span>{new Date(grievance.date).toLocaleDateString()}</span>
+
+                  <div className="booking-details">
+                    <span>Travel Date</span>
+                    <strong>{new Date(booking.travelDate).toLocaleDateString("en-IN")}</strong>
+                    <span>Travelers</span>
+                    <strong>{booking.numberOfTravelers}</strong>
+                    <span>Price</span>
+                    <strong>Rs. {Number(booking.price).toLocaleString("en-IN")}</strong>
+                    <span>Address</span>
+                    <strong>{booking.contactAddress}</strong>
                   </div>
+
                   <div className="button-row">
-                    <button type="button" onClick={() => handleEdit(grievance)}>
+                    <button type="button" onClick={() => handleEdit(booking)}>
                       Edit
                     </button>
                     <button
                       type="button"
                       className="danger-button"
-                      onClick={() => handleDelete(grievance._id)}
+                      onClick={() => handleDelete(booking._id)}
                     >
                       Delete
                     </button>

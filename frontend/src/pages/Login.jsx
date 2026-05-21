@@ -34,8 +34,8 @@ const Login = () => {
   return (
     <main className="auth-page">
       <section className="auth-panel">
-        <h1>Student Login</h1>
-        <p>Login to manage your grievance records.</p>
+        <h1>Traveler Login</h1>
+        <p>Login to manage bookings and keep travel plans moving.</p>
 
         {error && <div className="error-message">{error}</div>}
 
@@ -68,7 +68,7 @@ const Login = () => {
         </form>
 
         <p className="switch-link">
-          New student? <Link to="/register">Create an account</Link>
+          New traveler? <Link to="/register">Create an account</Link>
         </p>
       </section>
     </main>

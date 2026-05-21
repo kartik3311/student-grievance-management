@@ -1,0 +1,1282 @@
+﻿CODES TO PASTE IN PDF - Student Grievance Management System
+
+NOTE: Do not paste your real backend .env file because it contains database password. Paste .env.example only.
+
+
+============================================================
+backend\server.js
+============================================================
+
+import cors from "cors";
+import dotenv from "dotenv";
+import express from "express";
+import connectDB from "./config/db.js";
+import authRoutes from "./routes/authRoutes.js";
+import grievanceRoutes from "./routes/grievanceRoutes.js";
+
+dotenv.config();
+
+const app = express();
+const PORT = process.env.PORT || 5000;
+
+connectDB();
+
+app.use(cors());
+app.use(express.json());
+
+app.get("/", (req, res) => {
+  res.send("Student Grievance Management API is running");
+});
+
+app.use("/api", authRoutes);
+app.use("/api/grievances", grievanceRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
+
+============================================================
+backend\config\db.js
+============================================================
+
+import mongoose from "mongoose";
+
+const connectDB = async () => {
+  try {
+    const connection = await mongoose.connect(process.env.MONGO_URI);
+    console.log(`MongoDB connected: ${connection.connection.host}`);
+  } catch (error) {
+    console.error(`MongoDB connection failed: ${error.message}`);
+    process.exit(1);
+  }
+};
+
+export default connectDB;
+
+============================================================
+backend\models\Student.js
+============================================================
+
+import mongoose from "mongoose";
+
+const studentSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    email: {
+      type: String,
+      required: true,
+      unique: true,
+      lowercase: true,
+      trim: true
+    },
+    password: {
+      type: String,
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+const Student = mongoose.model("Student", studentSchema);
+
+export default Student;
+
+============================================================
+backend\models\Grievance.js
+============================================================
+
+import mongoose from "mongoose";
+
+const grievanceSchema = new mongoose.Schema(
+  {
+    title: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    description: {
+      type: String,
+      required: true,
+      trim: true
+    },
+    category: {
+      type: String,
+      enum: ["Academic", "Hostel", "Transport", "Other"],
+      required: true
+    },
+    date: {
+      type: Date,
+      default: Date.now
+    },
+    status: {
+      type: String,
+      enum: ["Pending", "Resolved"],
+      default: "Pending"
+    },
+    userId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Student",
+      required: true
+    }
+  },
+  { timestamps: true }
+);
+
+const Grievance = mongoose.model("Grievance", grievanceSchema);
+
+export default Grievance;
+
+============================================================
+backend\middleware\authMiddleware.js
+============================================================
+
+import jwt from "jsonwebtoken";
+import Student from "../models/Student.js";
+
+const protect = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "Unauthorized access" });
+  }
+
+  try {
+    const token = authHeader.split(" ")[1];
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    req.user = await Student.findById(decoded.id).select("-password");
+
+    if (!req.user) {
+      return res.status(401).json({ message: "Unauthorized access" });
+    }
+
+    next();
+  } catch (error) {
+    return res.status(401).json({ message: "Unauthorized access" });
+  }
+};
+
+export default protect;
+
+============================================================
+backend\controllers\authController.js
+============================================================
+
+import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
+import Student from "../models/Student.js";
+
+const createToken = (studentId) => {
+  return jwt.sign({ id: studentId }, process.env.JWT_SECRET, {
+    expiresIn: "7d"
+  });
+};
+
+export const registerStudent = async (req, res) => {
+  try {
+    const { name, email, password } = req.body;
+
+    if (!name || !email || !password) {
+      return res.status(400).json({ message: "Please fill all fields" });
+    }
+
+    const existingStudent = await Student.findOne({ email });
+
+    if (existingStudent) {
+      return res.status(409).json({ message: "Duplicate email" });
+    }
+
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const student = await Student.create({
+      name,
+      email,
+      password: hashedPassword
+    });
+
+    res.status(201).json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      token: createToken(student._id)
+    });
+  } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({ message: "Duplicate email" });
+    }
+
+    res.status(500).json({ message: "Registration failed" });
+  }
+};
+
+export const loginStudent = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res.status(400).json({ message: "Please enter email and password" });
+    }
+
+    const student = await Student.findOne({ email });
+
+    if (!student) {
+      return res.status(401).json({ message: "Invalid login" });
+    }
+
+    const isPasswordCorrect = await bcrypt.compare(password, student.password);
+
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ message: "Invalid login" });
+    }
+
+    res.json({
+      _id: student._id,
+      name: student.name,
+      email: student.email,
+      token: createToken(student._id)
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Login failed" });
+  }
+};
+
+============================================================
+backend\controllers\grievanceController.js
+============================================================
+
+import Grievance from "../models/Grievance.js";
+
+export const createGrievance = async (req, res) => {
+  try {
+    const { title, description, category } = req.body;
+
+    if (!title || !description || !category) {
+      return res.status(400).json({ message: "Please fill all fields" });
+    }
+
+    const grievance = await Grievance.create({
+      title,
+      description,
+      category,
+      userId: req.user._id
+    });
+
+    res.status(201).json(grievance);
+  } catch (error) {
+    res.status(500).json({ message: "Could not create grievance" });
+  }
+};
+
+export const getGrievances = async (req, res) => {
+  try {
+    const grievances = await Grievance.find({ userId: req.user._id }).sort({
+      createdAt: -1
+    });
+
+    res.json(grievances);
+  } catch (error) {
+    res.status(500).json({ message: "Could not fetch grievances" });
+  }
+};
+
+export const getGrievanceById = async (req, res) => {
+  try {
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: "Grievance not found" });
+    }
+
+    res.json(grievance);
+  } catch (error) {
+    res.status(500).json({ message: "Could not fetch grievance" });
+  }
+};
+
+export const updateGrievance = async (req, res) => {
+  try {
+    const { title, description, category, status } = req.body;
+
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: "Grievance not found" });
+    }
+
+    grievance.title = title || grievance.title;
+    grievance.description = description || grievance.description;
+    grievance.category = category || grievance.category;
+    grievance.status = status || grievance.status;
+
+    const updatedGrievance = await grievance.save();
+
+    res.json(updatedGrievance);
+  } catch (error) {
+    res.status(500).json({ message: "Could not update grievance" });
+  }
+};
+
+export const deleteGrievance = async (req, res) => {
+  try {
+    const grievance = await Grievance.findOne({
+      _id: req.params.id,
+      userId: req.user._id
+    });
+
+    if (!grievance) {
+      return res.status(404).json({ message: "Grievance not found" });
+    }
+
+    await grievance.deleteOne();
+
+    res.json({ message: "Grievance deleted" });
+  } catch (error) {
+    res.status(500).json({ message: "Could not delete grievance" });
+  }
+};
+
+export const searchGrievances = async (req, res) => {
+  try {
+    const { title = "" } = req.query;
+
+    const grievances = await Grievance.find({
+      userId: req.user._id,
+      title: { $regex: title, $options: "i" }
+    }).sort({ createdAt: -1 });
+
+    res.json(grievances);
+  } catch (error) {
+    res.status(500).json({ message: "Could not search grievances" });
+  }
+};
+
+============================================================
+backend\routes\authRoutes.js
+============================================================
+
+import express from "express";
+import { loginStudent, registerStudent } from "../controllers/authController.js";
+
+const router = express.Router();
+
+router.post("/register", registerStudent);
+router.post("/login", loginStudent);
+
+export default router;
+
+============================================================
+backend\routes\grievanceRoutes.js
+============================================================
+
+import express from "express";
+import {
+  createGrievance,
+  deleteGrievance,
+  getGrievanceById,
+  getGrievances,
+  searchGrievances,
+  updateGrievance
+} from "../controllers/grievanceController.js";
+import protect from "../middleware/authMiddleware.js";
+
+const router = express.Router();
+
+router.use(protect);
+
+router.get("/search", searchGrievances);
+router.route("/").post(createGrievance).get(getGrievances);
+router
+  .route("/:id")
+  .get(getGrievanceById)
+  .put(updateGrievance)
+  .delete(deleteGrievance);
+
+export default router;
+
+============================================================
+backend\.env.example
+============================================================
+
+PORT=5000
+MONGO_URI=mongodb://127.0.0.1:27017/student_grievance_db
+JWT_SECRET=replace_this_with_a_long_secret_key
+
+============================================================
+frontend\src\main.jsx
+============================================================
+
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import App from "./App.jsx";
+import { AuthProvider } from "./context/AuthContext.jsx";
+import "./index.css";
+
+ReactDOM.createRoot(document.getElementById("root")).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </React.StrictMode>
+);
+
+============================================================
+frontend\src\App.jsx
+============================================================
+
+import { Navigate, Route, Routes } from "react-router-dom";
+import ProtectedRoute from "./components/ProtectedRoute.jsx";
+import Dashboard from "./pages/Dashboard.jsx";
+import Login from "./pages/Login.jsx";
+import Register from "./pages/Register.jsx";
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to="/login" replace />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/dashboard"
+        element={
+          <ProtectedRoute>
+            <Dashboard />
+          </ProtectedRoute>
+        }
+      />
+    </Routes>
+  );
+}
+
+export default App;
+
+============================================================
+frontend\src\api.js
+============================================================
+
+const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000/api";
+
+export const apiRequest = async (path, options = {}) => {
+  const student = JSON.parse(localStorage.getItem("student") || "null");
+  const headers = {
+    "Content-Type": "application/json",
+    ...options.headers
+  };
+
+  if (student?.token) {
+    headers.Authorization = `Bearer ${student.token}`;
+  }
+
+  const response = await fetch(`${API_URL}${path}`, {
+    ...options,
+    headers
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Something went wrong");
+  }
+
+  return data;
+};
+
+============================================================
+frontend\src\components\ProtectedRoute.jsx
+============================================================
+
+import { Navigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const ProtectedRoute = ({ children }) => {
+  const { student } = useAuth();
+
+  if (!student) {
+    return <Navigate to="/login" replace state={{ message: "Unauthorized access" }} />;
+  }
+
+  return children;
+};
+
+export default ProtectedRoute;
+
+============================================================
+frontend\src\context\AuthContext.jsx
+============================================================
+
+import { createContext, useContext, useMemo, useState } from "react";
+
+const AuthContext = createContext(null);
+
+export const AuthProvider = ({ children }) => {
+  const [student, setStudent] = useState(() => {
+    return JSON.parse(localStorage.getItem("student") || "null");
+  });
+
+  const login = (studentData) => {
+    localStorage.setItem("student", JSON.stringify(studentData));
+    setStudent(studentData);
+  };
+
+  const logout = () => {
+    localStorage.removeItem("student");
+    setStudent(null);
+  };
+
+  const value = useMemo(() => ({ student, login, logout }), [student]);
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+};
+
+export const useAuth = () => {
+  return useContext(AuthContext);
+};
+
+============================================================
+frontend\src\pages\Register.jsx
+============================================================
+
+import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { apiRequest } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const Register = () => {
+  const navigate = useNavigate();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ name: "", email: "", password: "" });
+  const [error, setError] = useState("");
+
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    try {
+      const data = await apiRequest("/register", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+
+      login(data);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <main className="auth-page">
+      <section className="auth-panel">
+        <h1>Create Account</h1>
+        <p>Register as a student to submit and track grievances.</p>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="form">
+          <label>
+            Name
+            <input
+              type="text"
+              name="name"
+              value={form.name}
+              onChange={handleChange}
+              placeholder="Enter your name"
+              required
+            />
+          </label>
+
+          <label>
+            Email
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Create a password"
+              required
+            />
+          </label>
+
+          <button type="submit">Register</button>
+        </form>
+
+        <p className="switch-link">
+          Already have an account? <Link to="/login">Login</Link>
+        </p>
+      </section>
+    </main>
+  );
+};
+
+export default Register;
+
+============================================================
+frontend\src\pages\Login.jsx
+============================================================
+
+import { useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { apiRequest } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const Login = () => {
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { login } = useAuth();
+  const [form, setForm] = useState({ email: "", password: "" });
+  const [error, setError] = useState(location.state?.message || "");
+
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    setError("");
+
+    try {
+      const data = await apiRequest("/login", {
+        method: "POST",
+        body: JSON.stringify(form)
+      });
+
+      login(data);
+      navigate("/dashboard");
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  return (
+    <main className="auth-page">
+      <section className="auth-panel">
+        <h1>Student Login</h1>
+        <p>Login to manage your grievance records.</p>
+
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="form">
+          <label>
+            Email
+            <input
+              type="email"
+              name="email"
+              value={form.email}
+              onChange={handleChange}
+              placeholder="Enter your email"
+              required
+            />
+          </label>
+
+          <label>
+            Password
+            <input
+              type="password"
+              name="password"
+              value={form.password}
+              onChange={handleChange}
+              placeholder="Enter your password"
+              required
+            />
+          </label>
+
+          <button type="submit">Login</button>
+        </form>
+
+        <p className="switch-link">
+          New student? <Link to="/register">Create an account</Link>
+        </p>
+      </section>
+    </main>
+  );
+};
+
+export default Login;
+
+============================================================
+frontend\src\pages\Dashboard.jsx
+============================================================
+
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { apiRequest } from "../api.js";
+import { useAuth } from "../context/AuthContext.jsx";
+
+const emptyForm = {
+  title: "",
+  description: "",
+  category: "Academic",
+  status: "Pending"
+};
+
+const Dashboard = () => {
+  const navigate = useNavigate();
+  const { student, logout } = useAuth();
+  const [form, setForm] = useState(emptyForm);
+  const [grievances, setGrievances] = useState([]);
+  const [editingId, setEditingId] = useState(null);
+  const [searchTitle, setSearchTitle] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const fetchGrievances = async () => {
+    try {
+      const data = await apiRequest("/grievances");
+      setGrievances(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  useEffect(() => {
+    fetchGrievances();
+  }, []);
+
+  const handleChange = (event) => {
+    setForm({ ...form, [event.target.name]: event.target.value });
+  };
+
+  const clearMessages = () => {
+    setError("");
+    setSuccess("");
+  };
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    try {
+      if (editingId) {
+        await apiRequest(`/grievances/${editingId}`, {
+          method: "PUT",
+          body: JSON.stringify(form)
+        });
+        setSuccess("Grievance updated successfully");
+      } else {
+        await apiRequest("/grievances", {
+          method: "POST",
+          body: JSON.stringify(form)
+        });
+        setSuccess("Grievance submitted successfully");
+      }
+
+      setForm(emptyForm);
+      setEditingId(null);
+      fetchGrievances();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleEdit = (grievance) => {
+    setEditingId(grievance._id);
+    setForm({
+      title: grievance.title,
+      description: grievance.description,
+      category: grievance.category,
+      status: grievance.status
+    });
+    clearMessages();
+  };
+
+  const handleDelete = async (id) => {
+    clearMessages();
+
+    try {
+      await apiRequest(`/grievances/${id}`, { method: "DELETE" });
+      setSuccess("Grievance deleted successfully");
+      fetchGrievances();
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleSearch = async (event) => {
+    event.preventDefault();
+    clearMessages();
+
+    try {
+      const data = await apiRequest(
+        `/grievances/search?title=${encodeURIComponent(searchTitle)}`
+      );
+      setGrievances(data);
+    } catch (err) {
+      setError(err.message);
+    }
+  };
+
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  return (
+    <main className="dashboard-page">
+      <header className="dashboard-header">
+        <div>
+          <p>Welcome, {student?.name}</p>
+          <h1>Student Grievance Dashboard</h1>
+        </div>
+        <button type="button" className="secondary-button" onClick={handleLogout}>
+          Logout
+        </button>
+      </header>
+
+      {error && <div className="error-message">{error}</div>}
+      {success && <div className="success-message">{success}</div>}
+
+      <section className="dashboard-grid">
+        <div className="panel">
+          <h2>{editingId ? "Update Grievance" : "Submit Grievance"}</h2>
+
+          <form onSubmit={handleSubmit} className="form">
+            <label>
+              Title
+              <input
+                type="text"
+                name="title"
+                value={form.title}
+                onChange={handleChange}
+                placeholder="Short title"
+                required
+              />
+            </label>
+
+            <label>
+              Description
+              <textarea
+                name="description"
+                value={form.description}
+                onChange={handleChange}
+                placeholder="Describe your issue"
+                rows="5"
+                required
+              />
+            </label>
+
+            <label>
+              Category
+              <select name="category" value={form.category} onChange={handleChange}>
+                <option value="Academic">Academic</option>
+                <option value="Hostel">Hostel</option>
+                <option value="Transport">Transport</option>
+                <option value="Other">Other</option>
+              </select>
+            </label>
+
+            {editingId && (
+              <label>
+                Status
+                <select name="status" value={form.status} onChange={handleChange}>
+                  <option value="Pending">Pending</option>
+                  <option value="Resolved">Resolved</option>
+                </select>
+              </label>
+            )}
+
+            <div className="button-row">
+              <button type="submit">{editingId ? "Update" : "Submit"}</button>
+              {editingId && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  onClick={() => {
+                    setEditingId(null);
+                    setForm(emptyForm);
+                  }}
+                >
+                  Cancel
+                </button>
+              )}
+            </div>
+          </form>
+        </div>
+
+        <div className="panel">
+          <div className="list-header">
+            <h2>My Grievances</h2>
+            <form onSubmit={handleSearch} className="search-form">
+              <input
+                type="text"
+                value={searchTitle}
+                onChange={(event) => setSearchTitle(event.target.value)}
+                placeholder="Search by title"
+              />
+              <button type="submit">Search</button>
+              <button
+                type="button"
+                className="secondary-button"
+                onClick={() => {
+                  setSearchTitle("");
+                  fetchGrievances();
+                }}
+              >
+                Reset
+              </button>
+            </form>
+          </div>
+
+          <div className="grievance-list">
+            {grievances.length === 0 ? (
+              <p className="empty-text">No grievances found.</p>
+            ) : (
+              grievances.map((grievance) => (
+                <article className="grievance-card" key={grievance._id}>
+                  <div className="card-top">
+                    <h3>{grievance.title}</h3>
+                    <span className={`status ${grievance.status.toLowerCase()}`}>
+                      {grievance.status}
+                    </span>
+                  </div>
+                  <p>{grievance.description}</p>
+                  <div className="meta-row">
+                    <span>{grievance.category}</span>
+                    <span>{new Date(grievance.date).toLocaleDateString()}</span>
+                  </div>
+                  <div className="button-row">
+                    <button type="button" onClick={() => handleEdit(grievance)}>
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      className="danger-button"
+                      onClick={() => handleDelete(grievance._id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
+                </article>
+              ))
+            )}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
+};
+
+export default Dashboard;
+
+============================================================
+frontend\src\index.css
+============================================================
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  color: #1f2937;
+  background: #f5f7fb;
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+button {
+  border: 0;
+  border-radius: 6px;
+  background: #2563eb;
+  color: white;
+  cursor: pointer;
+  font-weight: 700;
+  padding: 12px 16px;
+}
+
+button:hover {
+  background: #1d4ed8;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+a {
+  color: #2563eb;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+.auth-page {
+  align-items: center;
+  display: flex;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 24px;
+}
+
+.auth-panel,
+.panel {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 18px 40px rgba(31, 41, 55, 0.08);
+}
+
+.auth-panel {
+  max-width: 440px;
+  padding: 32px;
+  width: 100%;
+}
+
+.auth-panel h1,
+.dashboard-header h1,
+.panel h2 {
+  margin: 0;
+}
+
+.auth-panel p,
+.dashboard-header p {
+  color: #6b7280;
+}
+
+.form {
+  display: grid;
+  gap: 16px;
+}
+
+.form label {
+  color: #374151;
+  display: grid;
+  font-weight: 700;
+  gap: 8px;
+}
+
+input,
+select,
+textarea {
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  color: #1f2937;
+  outline: none;
+  padding: 12px;
+  width: 100%;
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.14);
+}
+
+textarea {
+  resize: vertical;
+}
+
+.switch-link {
+  margin: 20px 0 0;
+  text-align: center;
+}
+
+.dashboard-page {
+  margin: 0 auto;
+  max-width: 1180px;
+  padding: 28px;
+}
+
+.dashboard-header {
+  align-items: center;
+  display: flex;
+  gap: 16px;
+  justify-content: space-between;
+  margin-bottom: 22px;
+}
+
+.dashboard-grid {
+  display: grid;
+  gap: 22px;
+  grid-template-columns: minmax(280px, 380px) 1fr;
+}
+
+.panel {
+  padding: 24px;
+}
+
+.panel h2 {
+  margin-bottom: 18px;
+}
+
+.button-row,
+.list-header,
+.meta-row,
+.card-top {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+}
+
+.button-row {
+  flex-wrap: wrap;
+}
+
+.secondary-button {
+  background: #e5e7eb;
+  color: #1f2937;
+}
+
+.secondary-button:hover {
+  background: #d1d5db;
+}
+
+.danger-button {
+  background: #dc2626;
+}
+
+.danger-button:hover {
+  background: #b91c1c;
+}
+
+.error-message,
+.success-message {
+  border-radius: 6px;
+  font-weight: 700;
+  margin: 0 0 16px;
+  padding: 12px 14px;
+}
+
+.error-message {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.success-message {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.list-header {
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+
+.search-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.search-form input {
+  min-width: 220px;
+}
+
+.grievance-list {
+  display: grid;
+  gap: 14px;
+}
+
+.grievance-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 18px;
+}
+
+.grievance-card h3,
+.grievance-card p {
+  margin: 0;
+}
+
+.grievance-card p {
+  color: #4b5563;
+  line-height: 1.5;
+  margin-top: 10px;
+}
+
+.card-top {
+  justify-content: space-between;
+}
+
+.status {
+  border-radius: 999px;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 6px 10px;
+}
+
+.status.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.status.resolved {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.meta-row {
+  color: #6b7280;
+  font-size: 14px;
+  justify-content: space-between;
+  margin: 16px 0;
+}
+
+.empty-text {
+  color: #6b7280;
+  margin: 0;
+}
+
+@media (max-width: 850px) {
+  .dashboard-grid,
+  .dashboard-header,
+  .list-header {
+    grid-template-columns: 1fr;
+  }
+
+  .dashboard-header,
+  .list-header {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .search-form {
+    justify-content: stretch;
+  }
+
+  .search-form input,
+  .search-form button {
+    width: 100%;
+  }
+}

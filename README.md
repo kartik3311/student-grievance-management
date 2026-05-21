@@ -1,6 +1,6 @@
-# Student Grievance Management System
+# Travel Package Booking Management System
 
-A simple MERN stack project for beginners. Students can register, login, submit grievances, search them, update their status, and delete them.
+A compact MERN stack project based on the make-up exam prompt. Users can register, login securely, create travel package bookings, view booking details, update or cancel bookings, track booking status, and logout.
 
 ## Tech Stack
 
@@ -9,26 +9,26 @@ A simple MERN stack project for beginners. Students can register, login, submit 
 - React with Vite
 - Node.js
 - bcrypt for password hashing
-- JSON Web Token for protected routes
+- JSON Web Token for authentication
 
 ## Folder Structure
 
 ```text
-student-grievance-management/
+travel-package-booking-management/
   backend/
     config/
       db.js
     controllers/
       authController.js
-      grievanceController.js
+      bookingController.js
     middleware/
       authMiddleware.js
     models/
-      Grievance.js
-      Student.js
+      Booking.js
+      User.js
     routes/
       authRoutes.js
-      grievanceRoutes.js
+      bookingRoutes.js
     .env.example
     package.json
     server.js
@@ -54,68 +54,78 @@ student-grievance-management/
 
 ## Backend Setup
 
-1. Open a terminal in the `backend` folder.
+1. Open a terminal in `backend`.
 2. Install packages:
 
 ```bash
 npm install
 ```
 
-3. Create a `.env` file by copying `.env.example`:
-
-PowerShell:
+3. Create `.env` from `.env.example`:
 
 ```powershell
 Copy-Item .env.example .env
 ```
 
-Then edit `.env`:
+4. Use values like:
 
 ```bash
 PORT=5000
-MONGO_URI=mongodb://127.0.0.1:27017/student_grievance_db
+MONGO_URI=mongodb://127.0.0.1:27017/travel_booking_db
 JWT_SECRET=replace_this_with_a_long_secret_key
 ```
 
-4. Make sure MongoDB is running locally.
-5. Start the backend:
+5. Start MongoDB locally.
+6. Run the backend:
 
 ```bash
 npm run dev
 ```
 
-The backend will run at `http://localhost:5000`.
+The backend runs at `http://localhost:5000`.
 
 ## Frontend Setup
 
-1. Open another terminal in the `frontend` folder.
+1. Open another terminal in `frontend`.
 2. Install packages:
 
 ```bash
 npm install
 ```
 
-3. Optional: create a `.env` file from `.env.example`:
-
-PowerShell:
-
-```powershell
-Copy-Item .env.example .env
-```
-
-Then edit `.env`:
+3. Optional `.env`:
 
 ```bash
 VITE_API_URL=http://localhost:5000/api
 ```
 
-4. Start the frontend:
+4. Run the frontend:
 
 ```bash
 npm run dev
 ```
 
-The frontend will run at `http://localhost:5173`.
+The frontend runs at `http://localhost:5173`.
+
+## MongoDB Schema
+
+### User
+
+- `name`
+- `email` unique
+- `password` hashed
+- `mobileNumber`
+
+### Booking
+
+- `destinationName`
+- `travelDate`
+- `numberOfTravelers`
+- `packageType`: `Silver`, `Gold`, `Platinum`
+- `price`
+- `bookingStatus`: `Pending`, `Confirmed`, `Cancelled`
+- `contactAddress`
+- `userId`
 
 ## API Routes
 
@@ -124,20 +134,19 @@ The frontend will run at `http://localhost:5173`.
 - `POST /api/register`
 - `POST /api/login`
 
-### Grievances
+### Bookings
 
-All grievance routes need this header:
+All booking routes require:
 
 ```text
 Authorization: Bearer YOUR_TOKEN
 ```
 
-- `POST /api/grievances`
-- `GET /api/grievances`
-- `GET /api/grievances/:id`
-- `PUT /api/grievances/:id`
-- `DELETE /api/grievances/:id`
-- `GET /api/grievances/search?title=keyword`
+- `POST /api/bookings`
+- `GET /api/bookings`
+- `GET /api/bookings/:id`
+- `PUT /api/bookings/:id`
+- `DELETE /api/bookings/:id`
 
 ## Example Request Bodies
 
@@ -147,49 +156,49 @@ Register:
 {
   "name": "Kartik",
   "email": "kartik@example.com",
-  "password": "123456"
+  "password": "123456",
+  "mobileNumber": "9876543210"
 }
 ```
 
-Create grievance:
+Create booking:
 
 ```json
 {
-  "title": "Bus delay",
-  "description": "The college bus arrives late every morning.",
-  "category": "Transport"
+  "destinationName": "Goa",
+  "travelDate": "2026-06-15",
+  "numberOfTravelers": 2,
+  "packageType": "Gold",
+  "price": 42000,
+  "contactAddress": "Sector 62, Noida"
 }
 ```
 
-Update grievance:
+Update booking:
 
 ```json
 {
-  "title": "Bus delay",
-  "description": "The college bus arrives late every morning.",
-  "category": "Transport",
-  "status": "Resolved"
+  "destinationName": "Goa",
+  "travelDate": "2026-06-15",
+  "numberOfTravelers": 3,
+  "packageType": "Platinum",
+  "price": 69000,
+  "bookingStatus": "Confirmed",
+  "contactAddress": "Sector 62, Noida"
 }
 ```
 
-## Beginner Notes
+## Notes
 
-- The password is never saved directly. It is hashed with bcrypt before saving.
+- Passwords are hashed using bcrypt before storage.
 - Login returns a JWT token.
-- The frontend stores the logged-in student in `localStorage`.
-- The dashboard route is protected on the frontend.
-- The backend also protects grievance APIs with JWT middleware.
-- Each student only sees their own grievances.
+- The frontend stores the logged-in user in `localStorage`.
+- Protected routes are enforced on both frontend and backend.
+- Each user can only view and modify their own bookings.
 
-## Deploy On Render
+## Render Deployment
 
-You need to upload this project to GitHub first. Do not upload `node_modules`.
-
-### Backend Render Settings
-
-Create a new **Web Service** on Render.
-
-Use these settings:
+### Backend Web Service
 
 ```text
 Root Directory: backend
@@ -197,32 +206,14 @@ Build Command: npm install
 Start Command: npm start
 ```
 
-Add these environment variables in Render:
+Environment variables:
 
 ```text
 MONGO_URI=your MongoDB Atlas connection string
 JWT_SECRET=any long secret text
 ```
 
-Do not add `PORT`. Render provides it automatically.
-
-After deploy, your backend URL will look like:
-
-```text
-https://your-backend-name.onrender.com
-```
-
-Test it by opening the backend URL in your browser. You should see:
-
-```text
-Student Grievance Management API is running
-```
-
-### Frontend Render Settings
-
-Create a new **Static Site** on Render.
-
-Use these settings:
+### Frontend Static Site
 
 ```text
 Root Directory: frontend
@@ -230,15 +221,13 @@ Build Command: npm install && npm run build
 Publish Directory: dist
 ```
 
-Add this environment variable:
+Environment variable:
 
 ```text
 VITE_API_URL=https://your-backend-name.onrender.com/api
 ```
 
-Replace `your-backend-name` with your real Render backend URL.
-
-Because this React app uses React Router, add this rewrite in the Render Static Site settings:
+React Router rewrite:
 
 ```text
 Source: /*

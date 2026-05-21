@@ -1,7 +1,7 @@
 {
-  "name": "student-grievance-backend",
+  "name": "travel-booking-backend",
   "version": "1.0.0",
-  "description": "Backend API for a Student Grievance Management System",
+  "description": "Backend API for a Travel Package Booking Management System",
   "main": "server.js",
   "type": "module",
   "engines": {

@@ -1,7 +1,7 @@
 {
-  "name": "student-grievance-frontend",
+  "name": "travel-booking-frontend",
   "version": "1.0.0",
-  "description": "React frontend for a Student Grievance Management System",
+  "description": "React frontend for a Travel Package Booking Management System",
   "type": "module",
   "engines": {
     "node": ">=18"

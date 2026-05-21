@@ -138,6 +138,34 @@ textarea {
   grid-template-columns: minmax(280px, 380px) 1fr;
 }
 
+.summary-strip {
+  display: grid;
+  gap: 14px;
+  grid-template-columns: repeat(3, 1fr);
+  margin-bottom: 18px;
+}
+
+.summary-strip > div {
+  background: #ffffff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  display: grid;
+  gap: 8px;
+  padding: 18px;
+}
+
+.summary-strip span,
+.record-count {
+  color: #6b7280;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.summary-strip strong {
+  color: #111827;
+  font-size: 24px;
+}
+
 .panel {
   padding: 24px;
 }
@@ -211,26 +239,26 @@ textarea {
   min-width: 220px;
 }
 
-.grievance-list {
+.booking-list {
   display: grid;
   gap: 14px;
 }
 
-.grievance-card {
+.booking-card {
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 18px;
 }
 
-.grievance-card h3,
-.grievance-card p {
+.booking-card h3,
+.booking-card p {
   margin: 0;
 }
 
-.grievance-card p {
+.booking-card p {
   color: #4b5563;
   line-height: 1.5;
-  margin-top: 10px;
+  margin-top: 6px;
 }
 
 .card-top {
@@ -254,11 +282,39 @@ textarea {
   color: #065f46;
 }
 
+.status.confirmed {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.status.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
 .meta-row {
   color: #6b7280;
   font-size: 14px;
   justify-content: space-between;
   margin: 16px 0;
+}
+
+.booking-details {
+  display: grid;
+  gap: 8px 14px;
+  grid-template-columns: minmax(96px, 120px) 1fr;
+  margin: 18px 0;
+}
+
+.booking-details span {
+  color: #6b7280;
+  font-weight: 700;
+}
+
+.booking-details strong {
+  color: #1f2937;
+  font-weight: 700;
+  overflow-wrap: anywhere;
 }
 
 .empty-text {
@@ -267,6 +323,7 @@ textarea {
 }
 
 @media (max-width: 850px) {
+  .summary-strip,
   .dashboard-grid,
   .dashboard-header,
   .list-header {

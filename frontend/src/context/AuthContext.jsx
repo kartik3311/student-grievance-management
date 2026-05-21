@@ -3,21 +3,21 @@ import { createContext, useContext, useMemo, useState } from "react";
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [student, setStudent] = useState(() => {
-    return JSON.parse(localStorage.getItem("student") || "null");
+  const [user, setUser] = useState(() => {
+    return JSON.parse(localStorage.getItem("user") || "null");
   });
 
-  const login = (studentData) => {
-    localStorage.setItem("student", JSON.stringify(studentData));
-    setStudent(studentData);
+  const login = (userData) => {
+    localStorage.setItem("user", JSON.stringify(userData));
+    setUser(userData);
   };
 
   const logout = () => {
-    localStorage.removeItem("student");
-    setStudent(null);
+    localStorage.removeItem("user");
+    setUser(null);
   };
 
-  const value = useMemo(() => ({ student, login, logout }), [student]);
+  const value = useMemo(() => ({ user, login, logout }), [user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
